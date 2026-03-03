@@ -1,0 +1,17 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nixbuild/nix-quick-install-action@v28
+      - run: nix develop --command cargo fmt --check
+      - run: nix develop --command cargo clippy --all-targets -- -D warnings
+      - run: nix develop --command cargo nextest run
+      - run: nix develop --command cargo nextest run --test-threads=1
+      - run: nix develop --command cargo insta test --check
+      - run: nix develop --command cargo deny check
+      - run: nix develop --command cargo run -p skillmill -- validate --discipline math-singapore --count 1000

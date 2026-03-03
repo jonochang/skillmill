@@ -1,0 +1,21 @@
+[package]
+name = "skillmill-math"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+indexmap.workspace = true
+rand.workspace = true
+serde.workspace = true
+serde_yaml.workspace = true
+skillmill-core = { path = "../../crates/skillmill-core" }
+
+[dev-dependencies]
+proptest.workspace = true
+insta.workspace = true
+tempfile.workspace = true
+sha2.workspace = true
+which.workspace = true

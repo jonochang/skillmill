@@ -1,0 +1,81 @@
+nodes:
+  p1-numbers-count-to-100:
+    id: p1-numbers-count-to-100
+    label: Count and write to 100
+    level: P1
+    prerequisites: []
+    schemas:
+      - p1-count-to-100-horizontal
+      - p1-count-to-100-vertical
+  p1-add-sub-within-10:
+    id: p1-add-sub-within-10
+    label: Add & subtract within 10
+    level: P1
+    prerequisites:
+      - p1-numbers-count-to-100
+    schemas:
+      - p1-add-sub-within-10-horizontal
+      - p1-add-sub-within-10-vertical
+  p1-add-sub-within-20:
+    id: p1-add-sub-within-20
+    label: Add & subtract within 20
+    level: P1
+    prerequisites:
+      - p1-add-sub-within-10
+    schemas:
+      - p1-add-sub-within-20-horizontal
+      - p1-add-sub-within-20-vertical
+  p2-add-sub-within-100:
+    id: p2-add-sub-within-100
+    label: Add & subtract within 100
+    level: P2
+    prerequisites:
+      - p1-add-sub-within-20
+    schemas:
+      - p2-add-sub-within-100-horizontal
+      - p2-add-sub-within-100-vertical
+  p2-multiply-2-3-4-5-10:
+    id: p2-multiply-2-3-4-5-10
+    label: Multiply (2, 3, 4, 5, 10 times tables)
+    level: P2
+    prerequisites:
+      - p2-add-sub-within-100
+    schemas:
+      - p2-multiply-2-3-4-5-10-horizontal
+      - p2-multiply-2-3-4-5-10-vertical
+  p2-divide-2-3-4-5-10:
+    id: p2-divide-2-3-4-5-10
+    label: Divide (2, 3, 4, 5, 10 times tables)
+    level: P2
+    prerequisites:
+      - p2-multiply-2-3-4-5-10
+    schemas:
+      - p2-divide-2-3-4-5-10-horizontal
+      - p2-divide-2-3-4-5-10-vertical
+  p3-add-sub-within-10000:
+    id: p3-add-sub-within-10000
+    label: Add & subtract within 10,000
+    level: P3
+    prerequisites:
+      - p2-add-sub-within-100
+    schemas:
+      - p3-add-sub-within-10000-horizontal
+      - p3-add-sub-within-10000-vertical
+  p3-multiply-6-7-8-9:
+    id: p3-multiply-6-7-8-9
+    label: Multiply (6, 7, 8, 9 times tables)
+    level: P3
+    prerequisites:
+      - p2-multiply-2-3-4-5-10
+    schemas:
+      - p3-multiply-6-7-8-9-horizontal
+      - p3-multiply-6-7-8-9-vertical
+  p3-divide-6-7-8-9:
+    id: p3-divide-6-7-8-9
+    label: Divide (6, 7, 8, 9 times tables)
+    level: P3
+    prerequisites:
+      - p2-divide-2-3-4-5-10
+    schemas:
+      - p3-divide-6-7-8-9-horizontal
+      - p3-divide-6-7-8-9-vertical
