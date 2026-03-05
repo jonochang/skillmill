@@ -47,6 +47,8 @@
           exec ${cruciblePkg}/bin/crucible-cli "$@"
         '';
       in {
+        packages.default = pkgs.callPackage ./package.nix { };
+
         devShells.default = pkgs.mkShell {
           buildInputs = [
             rustToolchain

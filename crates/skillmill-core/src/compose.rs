@@ -5,6 +5,7 @@ use crate::profile::StudentProfile;
 use crate::schema::{DifficultyAxes, GeneratedItem, SchemaError};
 use rand::prelude::IndexedRandom;
 use rand::RngCore;
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct WorksheetSpec {
@@ -33,26 +34,18 @@ impl Composer {
         rng: &mut dyn RngCore,
     ) -> Result<WorksheetSpec, SchemaError> {
         let mut items = Vec::new();
+        let mut seen_fingerprints = HashSet::new();
         let band_counts = allocate_band_counts(policy.item_count, &policy);
 
         for (band, count) in band_counts {
             let (node_ids, difficulty) = resolve_band(plugin, &policy, &band);
             for _ in 0..count {
-                let node_id = node_ids.choose(rng).ok_or_else(|| {
-                    SchemaError::GenerationFailed("no nodes available for band".to_string())
-                })?;
-                let schema_id = plugin
-                    .curriculum()
-                    .node(node_id)
-                    .and_then(|n| n.schemas.choose(rng))
-                    .ok_or_else(|| {
-                        SchemaError::GenerationFailed("no schemas for node".to_string())
-                    })?
-                    .to_string();
-                let item = plugin.execute_schema(
-                    &crate::schema::SchemaId(schema_id),
+                let item = sample_unique_item(
+                    plugin,
                     rng,
+                    &node_ids,
                     &difficulty,
+                    &mut seen_fingerprints,
                 )?;
                 items.push(item);
             }
@@ -61,6 +54,47 @@ impl Composer {
         let sections = inject_custom_sections(&items, &policy.custom_sections);
         Ok(WorksheetSpec { profile, policy, items, sections })
     }
+}
+
+fn sample_unique_item(
+    plugin: &dyn DisciplinePlugin,
+    rng: &mut dyn RngCore,
+    node_ids: &[NodeId],
+    difficulty: &DifficultyAxes,
+    seen_fingerprints: &mut HashSet<String>,
+) -> Result<GeneratedItem, SchemaError> {
+    const MAX_UNIQUENESS_RETRIES: usize = 100;
+
+    for _ in 0..MAX_UNIQUENESS_RETRIES {
+        let node_id = node_ids.choose(rng).ok_or_else(|| {
+            SchemaError::GenerationFailed("no nodes available for band".to_string())
+        })?;
+        let schema_id = plugin
+            .curriculum()
+            .node(node_id)
+            .and_then(|n| n.schemas.choose(rng))
+            .ok_or_else(|| SchemaError::GenerationFailed("no schemas for node".to_string()))?
+            .to_string();
+        let item = plugin.execute_schema(&crate::schema::SchemaId(schema_id), rng, difficulty)?;
+        let fingerprint = item_fingerprint(&item);
+        if seen_fingerprints.insert(fingerprint) {
+            return Ok(item);
+        }
+    }
+
+    Err(SchemaError::GenerationFailed(
+        "failed to generate a unique item after retries".to_string(),
+    ))
+}
+
+fn item_fingerprint(item: &GeneratedItem) -> String {
+    item
+        .question
+        .0
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .to_lowercase()
 }
 
 fn resolve_band(

@@ -74,6 +74,11 @@ impl DisciplinePlugin for MathPlugin {
             Some(SchemaSpec::Divide { tables }) => {
                 Ok(generate_divide(schema_id, &node_id, rng, tables))
             }
+            Some(SchemaSpec::GeometrySides) => Ok(generate_geometry_sides(schema_id, &node_id, rng)),
+            Some(SchemaSpec::GeometryVertices) => {
+                Ok(generate_geometry_vertices(schema_id, &node_id, rng))
+            }
+            Some(SchemaSpec::GeometryFaces) => Ok(generate_geometry_faces(schema_id, &node_id, rng)),
             None => Err(SchemaError::NotFound(schema_id.0.clone())),
         }
     }
@@ -105,6 +110,9 @@ enum SchemaSpec {
     AddSub { max: u32 },
     Multiply { tables: &'static [u32] },
     Divide { tables: &'static [u32] },
+    GeometrySides,
+    GeometryVertices,
+    GeometryFaces,
 }
 
 fn schema_spec(id: &str) -> Option<SchemaSpec> {
@@ -118,6 +126,9 @@ fn schema_spec(id: &str) -> Option<SchemaSpec> {
         }
         "p1-add-sub-within-20-horizontal" | "p1-add-sub-within-20-vertical" => {
             return Some(SchemaSpec::AddSub { max: 20 });
+        }
+        "p1-geometry-2d-sides-horizontal" | "p1-geometry-2d-sides-vertical" => {
+            return Some(SchemaSpec::GeometrySides);
         }
         _ => {}
     }
@@ -133,6 +144,9 @@ fn schema_spec(id: &str) -> Option<SchemaSpec> {
         "p2-divide-2-3-4-5-10-horizontal" | "p2-divide-2-3-4-5-10-vertical" => {
             return Some(SchemaSpec::Divide { tables: &[2, 3, 4, 5, 10] });
         }
+        "p2-geometry-2d-vertices-horizontal" | "p2-geometry-2d-vertices-vertical" => {
+            return Some(SchemaSpec::GeometryVertices);
+        }
         _ => {}
     }
 
@@ -146,6 +160,9 @@ fn schema_spec(id: &str) -> Option<SchemaSpec> {
         }
         "p3-divide-6-7-8-9-horizontal" | "p3-divide-6-7-8-9-vertical" => {
             return Some(SchemaSpec::Divide { tables: &[6, 7, 8, 9] });
+        }
+        "p3-geometry-3d-faces-horizontal" | "p3-geometry-3d-faces-vertical" => {
+            return Some(SchemaSpec::GeometryFaces);
         }
         _ => {}
     }
@@ -270,6 +287,64 @@ fn generate_divide(
     }
 }
 
+fn generate_geometry_sides(schema_id: &SchemaId, node_id: &str, rng: &mut dyn RngCore) -> GeneratedItem {
+    let _ = schema_id;
+    let shapes = ["triangle", "square", "rectangle", "pentagon", "hexagon"];
+    let shape = *shapes.choose(rng).unwrap_or(&"triangle");
+    let answer = shape_sides(shape).unwrap_or(3);
+    let question = geometry_sides_question(shape, rng);
+    GeneratedItem {
+        node_id: node_id.to_string(),
+        schema_id: schema_id.clone(),
+        question: RenderedQuestion(question),
+        answer: RenderedAnswer(answer.to_string()),
+        working: None,
+        visuals: vec![],
+    }
+}
+
+fn generate_geometry_vertices(
+    schema_id: &SchemaId,
+    node_id: &str,
+    rng: &mut dyn RngCore,
+) -> GeneratedItem {
+    let _ = schema_id;
+    let shapes = ["triangle", "square", "rectangle", "pentagon", "hexagon", "octagon"];
+    let shape = *shapes.choose(rng).unwrap_or(&"triangle");
+    let answer = shape_vertices(shape).unwrap_or(3);
+    let question = geometry_vertices_question(shape, rng);
+    GeneratedItem {
+        node_id: node_id.to_string(),
+        schema_id: schema_id.clone(),
+        question: RenderedQuestion(question),
+        answer: RenderedAnswer(answer.to_string()),
+        working: None,
+        visuals: vec![],
+    }
+}
+
+fn generate_geometry_faces(schema_id: &SchemaId, node_id: &str, rng: &mut dyn RngCore) -> GeneratedItem {
+    let _ = schema_id;
+    let solids = [
+        ("cube", "cube"),
+        ("cuboid", "cuboid"),
+        ("triangular prism", "triangular-prism"),
+        ("square pyramid", "square-pyramid"),
+        ("tetrahedron", "tetrahedron"),
+    ];
+    let (display_name, lookup_name) = *solids.choose(rng).unwrap_or(&("cube", "cube"));
+    let answer = solid_faces(lookup_name).unwrap_or(6);
+    let question = geometry_faces_question(display_name, rng);
+    GeneratedItem {
+        node_id: node_id.to_string(),
+        schema_id: schema_id.clone(),
+        question: RenderedQuestion(question),
+        answer: RenderedAnswer(answer.to_string()),
+        working: None,
+        visuals: vec![],
+    }
+}
+
 fn compute_answer(question: &str) -> Result<String, String> {
     let mut nums = Vec::new();
     let mut current = String::new();
@@ -297,6 +372,9 @@ fn compute_answer(question: &str) -> Result<String, String> {
     }
 
     if op.is_none() {
+        if let Some(geometry_answer) = compute_geometry_answer(question) {
+            return Ok(geometry_answer.to_string());
+        }
         if nums.len() == 1 {
             return Ok(nums[0].to_string());
         }
@@ -324,6 +402,165 @@ fn compute_answer(question: &str) -> Result<String, String> {
     };
 
     Ok(result.to_string())
+}
+
+fn compute_geometry_answer(question: &str) -> Option<u32> {
+    let normalized = question
+        .to_lowercase()
+        .replace('-', " ")
+        .replace('?', " ")
+        .replace(':', " ");
+
+    if normalized.contains("side") {
+        if normalized.contains("triangle") {
+            return shape_sides("triangle");
+        }
+        if normalized.contains("square") {
+            return shape_sides("square");
+        }
+        if normalized.contains("rectangle") {
+            return shape_sides("rectangle");
+        }
+        if normalized.contains("pentagon") {
+            return shape_sides("pentagon");
+        }
+        if normalized.contains("hexagon") {
+            return shape_sides("hexagon");
+        }
+        if normalized.contains("octagon") {
+            return shape_sides("octagon");
+        }
+    }
+
+    if normalized.contains("corner") || normalized.contains("vertice") {
+        if normalized.contains("triangle") {
+            return shape_vertices("triangle");
+        }
+        if normalized.contains("square") {
+            return shape_vertices("square");
+        }
+        if normalized.contains("rectangle") {
+            return shape_vertices("rectangle");
+        }
+        if normalized.contains("pentagon") {
+            return shape_vertices("pentagon");
+        }
+        if normalized.contains("hexagon") {
+            return shape_vertices("hexagon");
+        }
+        if normalized.contains("octagon") {
+            return shape_vertices("octagon");
+        }
+    }
+
+    if normalized.contains("face") {
+        if normalized.contains("triangular prism") {
+            return solid_faces("triangular-prism");
+        }
+        if normalized.contains("square pyramid") {
+            return solid_faces("square-pyramid");
+        }
+        if normalized.contains("tetrahedron") {
+            return solid_faces("tetrahedron");
+        }
+        if normalized.contains("cuboid") {
+            return solid_faces("cuboid");
+        }
+        if normalized.contains("cube") {
+            return solid_faces("cube");
+        }
+    }
+
+    None
+}
+
+fn shape_sides(shape: &str) -> Option<u32> {
+    match shape {
+        "triangle" => Some(3),
+        "square" => Some(4),
+        "rectangle" => Some(4),
+        "pentagon" => Some(5),
+        "hexagon" => Some(6),
+        "octagon" => Some(8),
+        _ => None,
+    }
+}
+
+fn shape_vertices(shape: &str) -> Option<u32> {
+    shape_sides(shape)
+}
+
+fn solid_faces(solid: &str) -> Option<u32> {
+    match solid {
+        "cube" => Some(6),
+        "cuboid" => Some(6),
+        "triangular-prism" => Some(5),
+        "square-pyramid" => Some(5),
+        "tetrahedron" => Some(4),
+        _ => None,
+    }
+}
+
+fn geometry_sides_question(shape: &str, rng: &mut dyn RngCore) -> String {
+    let article = article_for(shape);
+    match rng.gen_range(0..8) {
+        0 => format!("How many sides does {article} {shape} have? ___"),
+        1 => format!("Count the sides of {article} {shape}: ___"),
+        2 => format!("{article_cap} {shape} has ___ sides.", article_cap = capitalize(article)),
+        3 => format!("Write the number of sides in {article} {shape}: ___"),
+        4 => format!("Number of sides in {article} {shape} = ___"),
+        5 => format!("How many sides are on {article} {shape}? ___"),
+        6 => format!("Fill in the blank: {article_cap} {shape} has ___ sides.", article_cap = capitalize(article)),
+        _ => format!("Sides of {article} {shape}: ___"),
+    }
+}
+
+fn geometry_vertices_question(shape: &str, rng: &mut dyn RngCore) -> String {
+    let article = article_for(shape);
+    match rng.gen_range(0..8) {
+        0 => format!("How many corners does {article} {shape} have? ___"),
+        1 => format!("Count the corners of {article} {shape}: ___"),
+        2 => format!("{article_cap} {shape} has ___ corners.", article_cap = capitalize(article)),
+        3 => format!("Write the number of corners in {article} {shape}: ___"),
+        4 => format!("Number of corners in {article} {shape} = ___"),
+        5 => format!("How many vertices does {article} {shape} have? ___"),
+        6 => format!("Fill in the blank: {article_cap} {shape} has ___ corners.", article_cap = capitalize(article)),
+        _ => format!("Corners of {article} {shape}: ___"),
+    }
+}
+
+fn geometry_faces_question(solid: &str, rng: &mut dyn RngCore) -> String {
+    let article = article_for(solid);
+    match rng.gen_range(0..8) {
+        0 => format!("How many faces does {article} {solid} have? ___"),
+        1 => format!("Count the faces of {article} {solid}: ___"),
+        2 => format!("{article_cap} {solid} has ___ faces.", article_cap = capitalize(article)),
+        3 => format!("Write the number of faces in {article} {solid}: ___"),
+        4 => format!("Number of faces in {article} {solid} = ___"),
+        5 => format!("How many flat faces are on {article} {solid}? ___"),
+        6 => format!("Fill in the blank: {article_cap} {solid} has ___ faces.", article_cap = capitalize(article)),
+        _ => format!("Faces of {article} {solid}: ___"),
+    }
+}
+
+fn article_for(noun: &str) -> &'static str {
+    match noun.chars().next().unwrap_or('a').to_ascii_lowercase() {
+        'a' | 'e' | 'i' | 'o' | 'u' => "an",
+        _ => "a",
+    }
+}
+
+fn capitalize(word: &str) -> String {
+    let mut chars = word.chars();
+    match chars.next() {
+        Some(first) => {
+            let mut out = String::new();
+            out.push(first.to_ascii_uppercase());
+            out.push_str(chars.as_str());
+            out
+        }
+        None => String::new(),
+    }
 }
 
 #[cfg(test)]

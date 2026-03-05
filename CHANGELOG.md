@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.2] - 2026-03-05
+### Added
+- Geometry curriculum coverage for P1-P3:
+  - P1 2D shapes (number of sides)
+  - P2 2D shapes (number of vertices/corners)
+  - P3 3D solids (number of faces)
+- Child-friendly geometry question wording and expanded prompt variants.
+- Duplicate detector in worksheet composition with retry-and-drop behavior for repeated items.
+- PNG export support in rendering and CLI output (including multi-page PNG naming).
+- Root `package.nix` and `flake.nix` package output for release packaging.
+
+### Changed
+- Multiplication and division are now generated in vertical form with a top rule line.
+- Typst worksheet and answer-key templates were refactored for improved pagination and layout stability.
+- Crate versions bumped to `0.1.2`.
+
 ## [0.1.1] - 2026-03-05
 ### Added
 - Cucumber BDD harness for the CLI with a first `--help` scenario.
