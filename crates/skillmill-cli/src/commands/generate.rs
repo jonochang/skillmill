@@ -66,17 +66,28 @@ pub fn run(args: GenerateArgs) -> anyhow::Result<()> {
     let answer_target = args.out.join(format!("{}-answer-key.pdf", base));
 
     std::fs::rename(&result.student_pdf, &student_target)?;
-    let answer_path = if let Some(answer) = result.answer_key_pdf {
-        std::fs::rename(&answer, &answer_target)?;
-        Some(answer_target)
+    let student_png_targets = rename_png_pages(&args.out, &base, "student", result.student_png)?;
+
+    let answer_paths = if let (Some(answer_pdf), Some(answer_pngs)) =
+        (result.answer_key_pdf, result.answer_key_png)
+    {
+        std::fs::rename(&answer_pdf, &answer_target)?;
+        let answer_png_targets = rename_png_pages(&args.out, &base, "answer-key", answer_pngs)?;
+        Some((answer_target, answer_png_targets))
     } else {
         None
     };
 
     println!("✓ Generated");
     println!("  {}", student_target.display());
-    if let Some(answer) = answer_path {
-        println!("  {}", answer.display());
+    for path in &student_png_targets {
+        println!("  {}", path.display());
+    }
+    if let Some((answer_pdf, answer_pngs)) = answer_paths {
+        println!("  {}", answer_pdf.display());
+        for path in answer_pngs {
+            println!("  {}", path.display());
+        }
     }
 
     Ok(())
@@ -94,4 +105,26 @@ fn slugify(input: &str) -> String {
         }
     }
     slug.trim_matches('-').to_string()
+}
+
+fn rename_png_pages(
+    out_dir: &std::path::Path,
+    base: &str,
+    suffix: &str,
+    sources: Vec<std::path::PathBuf>,
+) -> anyhow::Result<Vec<std::path::PathBuf>> {
+    let multi = sources.len() > 1;
+    let mut targets = Vec::with_capacity(sources.len());
+
+    for (idx, source) in sources.into_iter().enumerate() {
+        let target = if multi {
+            out_dir.join(format!("{}-{}-p{:02}.png", base, suffix, idx + 1))
+        } else {
+            out_dir.join(format!("{}-{}.png", base, suffix))
+        };
+        std::fs::rename(source, &target)?;
+        targets.push(target);
+    }
+
+    Ok(targets)
 }

@@ -214,12 +214,8 @@ fn generate_add_sub(
         (a, b, '-', a - b)
     };
 
-    let use_vertical = schema_id.0.ends_with("vertical") || a >= 10 || b >= 10;
-    let question = if use_vertical {
-        format!("{}\n{} {}\n= ___", a, op, b)
-    } else {
-        format!("{} {} {} = ___", a, op, b)
-    };
+    let _ = schema_id;
+    let question = format!("{}\n{} {}\n────", a, op, b);
 
     GeneratedItem {
         node_id: node_id.to_string(),
@@ -239,11 +235,8 @@ fn generate_multiply(
 ) -> GeneratedItem {
     let a = *tables.choose(rng).unwrap_or(&2);
     let b = rng.gen_range(1..=12);
-    let question = if schema_id.0.ends_with("vertical") {
-        format!("{}\n* {}\n= ___", a, b)
-    } else {
-        format!("{} * {} = ___", a, b)
-    };
+    let _ = schema_id;
+    let question = format!("{}\n× {}\n────", a, b);
 
     GeneratedItem {
         node_id: node_id.to_string(),
@@ -264,11 +257,8 @@ fn generate_divide(
     let divisor = *tables.choose(rng).unwrap_or(&2);
     let quotient = rng.gen_range(1..=12);
     let dividend = divisor * quotient;
-    let question = if schema_id.0.ends_with("vertical") {
-        format!("{}\n/ {}\n= ___", dividend, divisor)
-    } else {
-        format!("{} / {} = ___", dividend, divisor)
-    };
+    let _ = schema_id;
+    let question = format!("{}\n÷ {}\n────", dividend, divisor);
 
     GeneratedItem {
         node_id: node_id.to_string(),
@@ -293,8 +283,12 @@ fn compute_answer(question: &str) -> Result<String, String> {
                 nums.push(current.parse::<u32>().map_err(|e| e.to_string())?);
                 current.clear();
             }
-            if matches!(ch, '+' | '-' | '*' | '/') {
-                op = Some(ch);
+            if matches!(ch, '+' | '-' | '*' | '/' | '×' | '÷' | 'x' | 'X') {
+                op = Some(match ch {
+                    '×' | 'x' | 'X' => '*',
+                    '÷' => '/',
+                    other => other,
+                });
             }
         }
     }
