@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.1] - 2026-03-05
+### Added
+- Cucumber BDD harness for the CLI with a first `--help` scenario.
+- Crucible and Untangle added to the Nix flake dev shell (built from local inputs).
+- P1–P3 worksheet batch generation scripts and policies used for review runs.
+
+### Changed
+- Refined Typst worksheet/answer key layout (landscape, dense 3-column, header/date styling, spacing fixes).
+- Explicit schema registry for P1–P3 mapping to generators for clearer curriculum management.
+- Difficulty biasing for add/sub generators to better differentiate P1 vs P2 vs P3.
+- Auto-vertical formatting for 2+ digit add/sub problems.
+
 ## [0.1.0] - 2026-03-03
 ### Added
 - Nix-based dev environment (`flake.nix`) with Rust toolchain and Typst.
@@ -13,4 +25,3 @@ All notable changes to this project will be documented in this file.
 - Validation and snapshot test harnesses, plus CI workflow.
 - Bench harness for worksheet rendering performance.
 - Git hooks and `cargo-deny` configuration.
-

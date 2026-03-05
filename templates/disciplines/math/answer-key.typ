@@ -1,38 +1,54 @@
 #let data = json.decode(sys.inputs.data)
 #let spec = data.spec
 
-#set page(margin: 1.2cm)
-#set text(size: spec.profile.customisations.layout.font_size * 1pt)
+#set page(width: 29.7cm, height: 21cm, margin: 0.45cm)
+#set text(size: spec.profile.customisations.layout.font_size * 0.9pt)
+#set par(leading: 0.12em, spacing: 0em)
 
-= Math Answer Key
-*Student:* #spec.profile.name \
-Date: #spec.profile.customisations.header.date
+#set par(leading: 0.35em, spacing: 0em)
+#grid(columns: (1fr, auto))[
+  #text(size: spec.profile.customisations.layout.font_size * 1.05pt, weight: "bold")[Math Answer Key]
+][
+  #align(right)[
+    #text(size: spec.profile.customisations.layout.font_size * 0.85pt)[Date: #spec.profile.customisations.header.date]
+  ]
+]
+#v(0.4cm)
+#set par(leading: 0.12em, spacing: 0em)
 
-#let render_answer(item, number) = {
-  let lines = item.question.split("\n")
-  if lines.len() == 1 {
-    [#text(str(number) + ". " + lines.at(0) + "  Answer: " + item.answer)]
-  } else {
-    #grid(columns: (auto, 1fr, auto), gutter: 0.2cm)[
-      [#text(str(number) + ".")]
-      [#stack(spacing: 0.05cm, lines.map(l => [l]))]
-      [#text("Answer: " + item.answer)]
-    ]
-  }
-}
+#let total = spec.sections.len()
+#let rows = 33
+#let cols = 3
+#let body_height = 19.3cm
 
-#columns(2, gutter: 0.8cm)[
-  #for section in spec.sections {
-    if section.type == "item" {
-      [
-        #render_answer(section.item, section.number)
-        #linebreak()
-      ]
-    } else {
-      [
-        #text(section.content)
-        #linebreak()
-      ]
+#context[
+  #let item_height = measure(text("1. 1 + 1 = __  Answer: 1")).height
+  #let raw_gap = (body_height - rows * item_height) / (rows - 1)
+  #let gap = calc.max(raw_gap, 2pt)
+
+  #let render_column(start) = block(height: body_height)[
+    #for i in range(0, rows) {
+      let idx = start + i
+      if idx < total {
+        let section = spec.sections.at(idx)
+        if section.type == "item" {
+          let q = section.item.question.replace("\n", " ")
+          text(str(section.number) + ". " + q + "  Answer: " + section.item.answer)
+        } else {
+          text(section.content)
+        }
+      } else {
+        []
+      }
+      if i < rows - 1 {
+        v(gap)
+      }
     }
-  }
+  ]
+
+  #columns(cols, gutter: 0.4cm)[
+    #render_column(0)
+    #render_column(rows)
+    #render_column(rows * 2)
+  ]
 ]

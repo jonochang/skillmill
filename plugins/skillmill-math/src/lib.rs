@@ -62,45 +62,20 @@ impl DisciplinePlugin for MathPlugin {
         rng: &mut dyn RngCore,
         _difficulty: &DifficultyAxes,
     ) -> Result<GeneratedItem, SchemaError> {
-        let id = schema_id.0.as_str();
         let node_id = self
             .node_id_for_schema(schema_id)
             .ok_or_else(|| SchemaError::NotFound(schema_id.0.clone()))?;
-        if id.starts_with("p1-count-to-100") {
-            return Ok(generate_count(schema_id, &node_id, rng, 100));
+        match schema_spec(schema_id.0.as_str()) {
+            Some(SchemaSpec::Count { max }) => Ok(generate_count(schema_id, &node_id, rng, max)),
+            Some(SchemaSpec::AddSub { max }) => Ok(generate_add_sub(schema_id, &node_id, rng, max)),
+            Some(SchemaSpec::Multiply { tables }) => {
+                Ok(generate_multiply(schema_id, &node_id, rng, tables))
+            }
+            Some(SchemaSpec::Divide { tables }) => {
+                Ok(generate_divide(schema_id, &node_id, rng, tables))
+            }
+            None => Err(SchemaError::NotFound(schema_id.0.clone())),
         }
-
-        if id.contains("add-sub-within-10") {
-            return Ok(generate_add_sub(schema_id, &node_id, rng, 10));
-        }
-        if id.contains("add-sub-within-20") {
-            return Ok(generate_add_sub(schema_id, &node_id, rng, 20));
-        }
-        if id.contains("add-sub-within-10000") {
-            return Ok(generate_add_sub(schema_id, &node_id, rng, 10_000));
-        }
-        if id.contains("add-sub-within-100") {
-            return Ok(generate_add_sub(schema_id, &node_id, rng, 100));
-        }
-
-        if id.contains("multiply-2-3-4-5-10") {
-            let tables = [2, 3, 4, 5, 10];
-            return Ok(generate_multiply(schema_id, &node_id, rng, &tables));
-        }
-        if id.contains("divide-2-3-4-5-10") {
-            let tables = [2, 3, 4, 5, 10];
-            return Ok(generate_divide(schema_id, &node_id, rng, &tables));
-        }
-        if id.contains("multiply-6-7-8-9") {
-            let tables = [6, 7, 8, 9];
-            return Ok(generate_multiply(schema_id, &node_id, rng, &tables));
-        }
-        if id.contains("divide-6-7-8-9") {
-            let tables = [6, 7, 8, 9];
-            return Ok(generate_divide(schema_id, &node_id, rng, &tables));
-        }
-
-        Err(SchemaError::NotFound(schema_id.0.clone()))
     }
 
     fn validate_answer(&self, item: &GeneratedItem) -> ValidationResult {
@@ -122,6 +97,60 @@ impl DisciplinePlugin for MathPlugin {
     fn template_dir(&self) -> &Path {
         &self.template_dir
     }
+}
+
+#[derive(Copy, Clone)]
+enum SchemaSpec {
+    Count { max: u32 },
+    AddSub { max: u32 },
+    Multiply { tables: &'static [u32] },
+    Divide { tables: &'static [u32] },
+}
+
+fn schema_spec(id: &str) -> Option<SchemaSpec> {
+    // P1
+    match id {
+        "p1-count-to-100-horizontal" | "p1-count-to-100-vertical" => {
+            return Some(SchemaSpec::Count { max: 100 });
+        }
+        "p1-add-sub-within-10-horizontal" | "p1-add-sub-within-10-vertical" => {
+            return Some(SchemaSpec::AddSub { max: 10 });
+        }
+        "p1-add-sub-within-20-horizontal" | "p1-add-sub-within-20-vertical" => {
+            return Some(SchemaSpec::AddSub { max: 20 });
+        }
+        _ => {}
+    }
+
+    // P2
+    match id {
+        "p2-add-sub-within-100-horizontal" | "p2-add-sub-within-100-vertical" => {
+            return Some(SchemaSpec::AddSub { max: 100 });
+        }
+        "p2-multiply-2-3-4-5-10-horizontal" | "p2-multiply-2-3-4-5-10-vertical" => {
+            return Some(SchemaSpec::Multiply { tables: &[2, 3, 4, 5, 10] });
+        }
+        "p2-divide-2-3-4-5-10-horizontal" | "p2-divide-2-3-4-5-10-vertical" => {
+            return Some(SchemaSpec::Divide { tables: &[2, 3, 4, 5, 10] });
+        }
+        _ => {}
+    }
+
+    // P3
+    match id {
+        "p3-add-sub-within-10000-horizontal" | "p3-add-sub-within-10000-vertical" => {
+            return Some(SchemaSpec::AddSub { max: 10_000 });
+        }
+        "p3-multiply-6-7-8-9-horizontal" | "p3-multiply-6-7-8-9-vertical" => {
+            return Some(SchemaSpec::Multiply { tables: &[6, 7, 8, 9] });
+        }
+        "p3-divide-6-7-8-9-horizontal" | "p3-divide-6-7-8-9-vertical" => {
+            return Some(SchemaSpec::Divide { tables: &[6, 7, 8, 9] });
+        }
+        _ => {}
+    }
+
+    None
 }
 
 fn generate_count(
@@ -146,6 +175,18 @@ fn generate_count(
     }
 }
 
+fn difficulty_floor(max: u32) -> u32 {
+    if max >= 10_000 {
+        max / 2
+    } else if max >= 100 {
+        max / 3
+    } else if max >= 20 {
+        max / 4
+    } else {
+        1
+    }
+}
+
 fn generate_add_sub(
     schema_id: &SchemaId,
     node_id: &str,
@@ -153,17 +194,28 @@ fn generate_add_sub(
     max: u32,
 ) -> GeneratedItem {
     let add = rng.gen_bool(0.5);
+    let min = difficulty_floor(max);
     let (a, b, op, answer) = if add {
-        let a = rng.gen_range(1..=max - 1);
-        let b = rng.gen_range(1..=max - a);
+        let a = rng.gen_range(min..=max - 1);
+        let b_max = max.saturating_sub(a).max(1);
+        let b = if b_max < min {
+            rng.gen_range(1..=b_max)
+        } else {
+            rng.gen_range(min..=b_max)
+        };
         (a, b, '+', a + b)
     } else {
-        let a = rng.gen_range(1..=max);
-        let b = rng.gen_range(1..=a);
+        let a = rng.gen_range(min..=max);
+        let b = if a < min {
+            rng.gen_range(1..=a)
+        } else {
+            rng.gen_range(min..=a)
+        };
         (a, b, '-', a - b)
     };
 
-    let question = if schema_id.0.ends_with("vertical") {
+    let use_vertical = schema_id.0.ends_with("vertical") || a >= 10 || b >= 10;
+    let question = if use_vertical {
         format!("{}\n{} {}\n= ___", a, op, b)
     } else {
         format!("{} {} {} = ___", a, op, b)

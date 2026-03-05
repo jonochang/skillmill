@@ -33,6 +33,7 @@ sha2            = "0.10"
 which           = "6"
 pathdiff        = "0.2"
 chrono          = { version = "0.4", features = ["clock", "std"] }
+cucumber        = "0.20"
 
 [profile.release]
 codegen-units = 1
