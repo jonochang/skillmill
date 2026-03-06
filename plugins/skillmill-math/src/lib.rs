@@ -2,6 +2,7 @@ use rand::Rng;
 use rand::RngCore;
 use rand::prelude::IndexedRandom;
 use skillmill_core::DisciplinePlugin;
+use serde_json::json;
 use skillmill_core::curriculum::CurriculumGraph;
 use skillmill_core::policy::{Band, BandSource};
 use skillmill_core::schema::{
@@ -519,7 +520,7 @@ fn generate_geometry_sides(
         question: RenderedQuestion(question),
         answer: RenderedAnswer(answer.to_string()),
         working: None,
-        visuals: vec![],
+        visuals: vec![geometry_visual(shape)],
     }
 }
 
@@ -546,7 +547,7 @@ fn generate_geometry_vertices(
         question: RenderedQuestion(question),
         answer: RenderedAnswer(answer.to_string()),
         working: None,
-        visuals: vec![],
+        visuals: vec![geometry_visual(shape)],
     }
 }
 
@@ -572,8 +573,22 @@ fn generate_geometry_faces(
         question: RenderedQuestion(question),
         answer: RenderedAnswer(answer.to_string()),
         working: None,
-        visuals: vec![],
+        visuals: vec![solid_visual(lookup_name)],
     }
+}
+
+fn geometry_visual(shape: &str) -> serde_json::Value {
+    json!({
+        "kind": "shape2d",
+        "shape": shape,
+    })
+}
+
+fn solid_visual(solid: &str) -> serde_json::Value {
+    json!({
+        "kind": "solid3d",
+        "solid": solid,
+    })
 }
 
 fn compute_answer(question: &str) -> Result<String, String> {
