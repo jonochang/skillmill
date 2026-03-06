@@ -1,8 +1,10 @@
 use skillmill_core::compose::{WorksheetSection, WorksheetSpec};
+use skillmill_core::policy::{Band, BandSource, CustomSection, WorksheetPolicy};
+use skillmill_core::profile::{
+    StudentProfile, WorksheetCustomisation, WorksheetHeader, WorksheetLayout,
+};
 use skillmill_core::render::RenderPipeline;
 use skillmill_core::schema::{GeneratedItem, RenderedAnswer, RenderedQuestion, SchemaId};
-use skillmill_core::policy::{Band, BandSource, CustomSection, WorksheetPolicy};
-use skillmill_core::profile::{StudentProfile, WorksheetCustomisation, WorksheetHeader, WorksheetLayout};
 
 #[test]
 fn render_snapshot_json() {
@@ -27,9 +29,11 @@ fn render_snapshot_json() {
     let policy = WorksheetPolicy {
         discipline: "math-singapore".to_string(),
         target_node: "p2-add-sub-within-100".to_string(),
-        composition: vec![
-            Band { source: BandSource::TargetNode, weight: 1.0, item_types: vec!["drill".into()] },
-        ],
+        composition: vec![Band {
+            source: BandSource::TargetNode,
+            weight: 1.0,
+            item_types: vec!["drill".into()],
+        }],
         item_count: 2,
         include_answer_key: true,
         include_workings: false,
@@ -58,13 +62,19 @@ fn render_snapshot_json() {
     };
 
     let sections = vec![
-        WorksheetSection::Item { number: 1, item: item1.clone() },
+        WorksheetSection::Item {
+            number: 1,
+            item: item1.clone(),
+        },
         WorksheetSection::Custom {
             position: "before_item 2".to_string(),
             kind: "free_text".to_string(),
             content: "Nice work!".to_string(),
         },
-        WorksheetSection::Item { number: 2, item: item2.clone() },
+        WorksheetSection::Item {
+            number: 2,
+            item: item2.clone(),
+        },
     ];
 
     let spec = WorksheetSpec {
@@ -81,7 +91,9 @@ fn render_snapshot_json() {
         let plugin = skillmill_math::MathPlugin::new().expect("plugin init");
         let out_dir = tempfile::tempdir().expect("tempdir");
         let pipeline = RenderPipeline::new(plugin.template_dir());
-        let result = pipeline.render(&spec, out_dir.path(), true).expect("render");
+        let result = pipeline
+            .render(&spec, out_dir.path(), true)
+            .expect("render");
         let student_size = std::fs::metadata(&result.student_pdf).unwrap().len();
         assert!(student_size > 0, "student pdf empty");
     }

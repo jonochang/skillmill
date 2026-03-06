@@ -57,8 +57,11 @@ pub fn run(args: GenerateArgs) -> anyhow::Result<()> {
 
     let spec = Composer::compose(plugin, policy.clone(), profile, &mut rng)?;
     let pipeline = RenderPipeline::new(plugin.template_dir());
-    let result =
-        pipeline.render(&spec, &args.out, !args.no_answer_key && policy.include_answer_key)?;
+    let result = pipeline.render(
+        &spec,
+        &args.out,
+        !args.no_answer_key && policy.include_answer_key,
+    )?;
 
     let slug = slugify(&spec.profile.name);
     let base = format!("{}-{}", slug, policy.target_node);

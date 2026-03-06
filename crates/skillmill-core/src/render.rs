@@ -1,8 +1,8 @@
 use crate::compose::WorksheetSpec;
 use anyhow::Context;
+use chrono::Local;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
-use chrono::Local;
 
 #[derive(Debug, Clone)]
 pub struct RenderPipeline {
@@ -24,7 +24,9 @@ struct RenderData<'a> {
 
 impl RenderPipeline {
     pub fn new(template_dir: impl AsRef<Path>) -> Self {
-        Self { template_dir: template_dir.as_ref().to_path_buf() }
+        Self {
+            template_dir: template_dir.as_ref().to_path_buf(),
+        }
     }
 
     pub fn render(
@@ -62,7 +64,14 @@ impl RenderPipeline {
                 let data_string = data_string.clone();
                 let student_pdf = student_pdf.clone();
                 let student_png = student_png.clone();
-                move || render_document(&worksheet_template, &data_string, &student_pdf, &student_png)
+                move || {
+                    render_document(
+                        &worksheet_template,
+                        &data_string,
+                        &student_pdf,
+                        &student_png,
+                    )
+                }
             });
 
             let answer = if include_answer_key {
@@ -71,27 +80,30 @@ impl RenderPipeline {
                     let data_string = data_string.clone();
                     let answer_pdf = answer_pdf.clone();
                     let answer_png = answer_png.clone();
-                    move || render_document(&answer_template, &data_string, &answer_pdf, &answer_png)
+                    move || {
+                        render_document(&answer_template, &data_string, &answer_pdf, &answer_png)
+                    }
                 }))
             } else {
                 None
             };
 
-            let student_png = student
-                .await
-                .context("student render task failed")??;
+            let student_png = student.await.context("student render task failed")??;
 
             if let Some(answer) = answer {
-                let answer_png = answer
-                    .await
-                    .context("answer key render task failed")??;
+                let answer_png = answer.await.context("answer key render task failed")??;
                 Ok::<_, anyhow::Error>((student_png, Some(answer_pdf), Some(answer_png)))
             } else {
                 Ok::<_, anyhow::Error>((student_png, None, None))
             }
         })?;
 
-        Ok(RenderResult { student_pdf, student_png, answer_key_pdf, answer_key_png })
+        Ok(RenderResult {
+            student_pdf,
+            student_png,
+            answer_key_pdf,
+            answer_key_png,
+        })
     }
 }
 
@@ -135,7 +147,11 @@ fn run_typst(template: &Path, data_string: &str, output: &Path) -> anyhow::Resul
     Ok(())
 }
 
-fn run_typst_png(template: &Path, data_string: &str, png_output: &Path) -> anyhow::Result<Vec<PathBuf>> {
+fn run_typst_png(
+    template: &Path,
+    data_string: &str,
+    png_output: &Path,
+) -> anyhow::Result<Vec<PathBuf>> {
     let root = PathBuf::from("/");
     let data_arg = data_string.to_string();
     let out_dir = png_output

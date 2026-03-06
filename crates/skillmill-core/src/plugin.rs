@@ -31,7 +31,9 @@ pub struct PluginRegistry {
 
 impl PluginRegistry {
     pub fn new() -> Self {
-        Self { plugins: IndexMap::new() }
+        Self {
+            plugins: IndexMap::new(),
+        }
     }
 
     pub fn register(&mut self, plugin: Box<dyn DisciplinePlugin>) {

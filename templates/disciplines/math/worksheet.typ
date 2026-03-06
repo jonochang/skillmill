@@ -5,7 +5,27 @@
 #set text(size: spec.profile.customisations.layout.font_size * 0.82pt)
 #set par(leading: 0.12em, spacing: 0em)
 
-#let total = spec.sections.len()
+#let section_component(section) = {
+  if section.type != "item" {
+    "other"
+  } else if section.item.question.starts-with("Language:") {
+    "language"
+  } else if section.item.question.starts-with("Symbols:") {
+    "symbols"
+  } else if section.item.question.starts-with("Diagrams:") {
+    "diagrams"
+  } else {
+    "other"
+  }
+}
+
+#let language_sections = spec.sections.filter(section => section_component(section) == "language")
+#let symbols_sections = spec.sections.filter(section => section_component(section) == "symbols")
+#let diagrams_sections = spec.sections.filter(section => section_component(section) == "diagrams")
+#let other_sections = spec.sections.filter(section => section_component(section) == "other")
+#let ordered_sections = language_sections + symbols_sections + diagrams_sections + other_sections
+
+#let total = ordered_sections.len()
 #let rows = 11
 #let cols = 3
 #let items_per_page = rows * cols
@@ -51,34 +71,77 @@
   ]
 }
 
-#let render_slot(global_idx) = {
-  if global_idx < total {
-    let section = spec.sections.at(global_idx)
-    if section.type == "item" {
-      block(height: row_height)[#render_item(section)]
+#let has_component_sections = language_sections.len() + symbols_sections.len() + diagrams_sections.len() > 0
+
+#let render_standard_pages(sections) = {
+  let page_total = sections.len()
+  let page_count = calc.ceil(page_total / items_per_page)
+
+  let render_slot(global_idx) = {
+    if global_idx < page_total {
+      let section = sections.at(global_idx)
+      if section.type == "item" {
+        block(height: row_height)[#render_item(section)]
+      } else {
+        block(height: row_height)[#text(section.content)]
+      }
     } else {
-      block(height: row_height)[#text(section.content)]
+      block(height: row_height)[]
     }
-  } else {
-    block(height: row_height)[]
+  }
+
+  let render_column(start) = block(height: body_height)[
+    #for i in range(0, rows) {
+      render_slot(start + i)
+    }
+  ]
+
+  for page in range(0, page_count) {
+    let page_start = page * items_per_page
+    render_header()
+    columns(cols, gutter: 0.6cm)[
+      #render_column(page_start)
+      #render_column(page_start + rows)
+      #render_column(page_start + rows * 2)
+    ]
+    if page < page_count - 1 {
+      pagebreak()
+    }
   }
 }
 
-#let render_column(start) = block(height: body_height)[
-  #for i in range(0, rows) {
-    render_slot(start + i)
-  }
-]
+#if has_component_sections {
+  let component_rows = calc.max(language_sections.len(), calc.max(symbols_sections.len(), diagrams_sections.len()))
+  let component_row_height = body_height / (component_rows + 1)
 
-#for page in range(0, page_count) {
-  let page_start = page * items_per_page
-  render_header()
-  columns(cols, gutter: 0.6cm)[
-    #render_column(page_start)
-    #render_column(page_start + rows)
-    #render_column(page_start + rows * 2)
-  ]
-  if page < page_count - 1 {
-    pagebreak()
+  let render_component_slot(items, idx) = {
+    if idx < items.len() {
+      block(height: component_row_height)[#render_item(items.at(idx))]
+    } else {
+      block(height: component_row_height)[]
+    }
   }
+
+  let render_component_column(title, items) = block(height: body_height)[
+    #text(weight: "bold")[#title]
+    #for i in range(0, component_rows) {
+      render_component_slot(items, i)
+    }
+  ]
+
+  render_header()
+  grid(columns: (1fr, 1fr, 1fr), gutter: 0.6cm)[
+    #render_component_column("Language", language_sections)
+  ][
+    #render_component_column("Symbols", symbols_sections)
+  ][
+    #render_component_column("Diagrams", diagrams_sections)
+  ]
+
+  if other_sections.len() > 0 {
+    pagebreak()
+    render_standard_pages(other_sections)
+  }
+} else {
+  render_standard_pages(ordered_sections)
 }

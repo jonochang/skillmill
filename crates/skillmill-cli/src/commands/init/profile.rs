@@ -1,5 +1,7 @@
 use clap::Parser;
-use skillmill_core::profile::{StudentProfile, WorksheetCustomisation, WorksheetHeader, WorksheetLayout};
+use skillmill_core::profile::{
+    StudentProfile, WorksheetCustomisation, WorksheetHeader, WorksheetLayout,
+};
 
 use crate::commands::registry::load_registry;
 use crate::ui::prompt;
@@ -63,8 +65,16 @@ pub fn run(args: InitProfileArgs) -> anyhow::Result<()> {
             mastery: std::collections::HashMap::new(),
             customisations: WorksheetCustomisation {
                 header: WorksheetHeader {
-                    school: if school.trim().is_empty() { None } else { Some(school) },
-                    class: if class.trim().is_empty() { None } else { Some(class) },
+                    school: if school.trim().is_empty() {
+                        None
+                    } else {
+                        Some(school)
+                    },
+                    class: if class.trim().is_empty() {
+                        None
+                    } else {
+                        Some(class)
+                    },
                     date: "auto".to_string(),
                 },
                 layout: WorksheetLayout {
@@ -78,9 +88,28 @@ pub fn run(args: InitProfileArgs) -> anyhow::Result<()> {
         println!("  Name: {}", profile.name);
         println!("  Discipline: {}", profile.discipline);
         println!("  Node: {}", profile.current_node);
-        println!("  Working space: {}", profile.customisations.layout.working_space);
-        println!("  School: {}", profile.customisations.header.school.clone().unwrap_or_default());
-        println!("  Class: {}", profile.customisations.header.class.clone().unwrap_or_default());
+        println!(
+            "  Working space: {}",
+            profile.customisations.layout.working_space
+        );
+        println!(
+            "  School: {}",
+            profile
+                .customisations
+                .header
+                .school
+                .clone()
+                .unwrap_or_default()
+        );
+        println!(
+            "  Class: {}",
+            profile
+                .customisations
+                .header
+                .class
+                .clone()
+                .unwrap_or_default()
+        );
         println!("  Font size: {}", profile.customisations.layout.font_size);
 
         if prompt::confirm("Confirm profile?", true)? {
@@ -97,7 +126,10 @@ pub fn run(args: InitProfileArgs) -> anyhow::Result<()> {
 
     write_profile_with_header(&profile, &out_path)?;
     println!("✓ Created {}", out_path.display());
-    println!("  Next: skillmill init policy --profile {}", out_path.display());
+    println!(
+        "  Next: skillmill init policy --profile {}",
+        out_path.display()
+    );
     Ok(())
 }
 

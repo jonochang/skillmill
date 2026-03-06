@@ -3,8 +3,8 @@ use crate::plugin::DisciplinePlugin;
 use crate::policy::{BandSource, WorksheetPolicy};
 use crate::profile::StudentProfile;
 use crate::schema::{DifficultyAxes, GeneratedItem, SchemaError};
-use rand::prelude::IndexedRandom;
 use rand::RngCore;
+use rand::prelude::IndexedRandom;
 use std::collections::HashSet;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -21,7 +21,11 @@ pub enum WorksheetSection {
     #[serde(rename = "item")]
     Item { number: u32, item: GeneratedItem },
     #[serde(rename = "custom")]
-    Custom { position: String, kind: String, content: String },
+    Custom {
+        position: String,
+        kind: String,
+        content: String,
+    },
 }
 
 pub struct Composer;
@@ -52,7 +56,12 @@ impl Composer {
         }
 
         let sections = inject_custom_sections(&items, &policy.custom_sections);
-        Ok(WorksheetSpec { profile, policy, items, sections })
+        Ok(WorksheetSpec {
+            profile,
+            policy,
+            items,
+            sections,
+        })
     }
 }
 
@@ -88,8 +97,7 @@ fn sample_unique_item(
 }
 
 fn item_fingerprint(item: &GeneratedItem) -> String {
-    item
-        .question
+    item.question
         .0
         .split_whitespace()
         .collect::<Vec<_>>()
@@ -114,14 +122,14 @@ fn resolve_band(
                 (prereqs, DifficultyAxes::default())
             }
         }
-        BandSource::NonRoutine => (
-            vec![target],
-            DifficultyAxes { varied: true },
-        ),
+        BandSource::NonRoutine => (vec![target], DifficultyAxes { varied: true }),
     }
 }
 
-fn allocate_band_counts(item_count: u32, policy: &WorksheetPolicy) -> Vec<(crate::policy::Band, u32)> {
+fn allocate_band_counts(
+    item_count: u32,
+    policy: &WorksheetPolicy,
+) -> Vec<(crate::policy::Band, u32)> {
     if policy.composition.is_empty() {
         return Vec::new();
     }
@@ -159,15 +167,24 @@ fn inject_custom_sections(
 
     for (idx, item) in items.iter().enumerate() {
         let number = (idx + 1) as u32;
-        for (_pos, section, _before) in custom_map.iter().filter(|(pos, _, before)| *pos == number && *before) {
+        for (_pos, section, _before) in custom_map
+            .iter()
+            .filter(|(pos, _, before)| *pos == number && *before)
+        {
             sections.push(WorksheetSection::Custom {
                 position: section.position.clone(),
                 kind: section.r#type.clone(),
                 content: section.content.clone(),
             });
         }
-        sections.push(WorksheetSection::Item { number, item: item.clone() });
-        for (_pos, section, _before) in custom_map.iter().filter(|(pos, _, before)| *pos == number && !*before) {
+        sections.push(WorksheetSection::Item {
+            number,
+            item: item.clone(),
+        });
+        for (_pos, section, _before) in custom_map
+            .iter()
+            .filter(|(pos, _, before)| *pos == number && !*before)
+        {
             sections.push(WorksheetSection::Custom {
                 position: section.position.clone(),
                 kind: section.r#type.clone(),

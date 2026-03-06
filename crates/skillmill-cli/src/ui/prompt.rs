@@ -14,11 +14,18 @@ pub fn input_default(prompt: &str, default: &str) -> anyhow::Result<String> {
 }
 
 pub fn select(prompt: &str, items: &[String]) -> anyhow::Result<usize> {
-    let idx = Select::new().with_prompt(prompt).items(items).default(0).interact()?;
+    let idx = Select::new()
+        .with_prompt(prompt)
+        .items(items)
+        .default(0)
+        .interact()?;
     Ok(idx)
 }
 
 pub fn confirm(prompt: &str, default: bool) -> anyhow::Result<bool> {
-    let value = Confirm::new().with_prompt(prompt).default(default).interact()?;
+    let value = Confirm::new()
+        .with_prompt(prompt)
+        .default(default)
+        .interact()?;
     Ok(value)
 }

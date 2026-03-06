@@ -85,10 +85,8 @@ pub fn run(args: InitPolicyArgs) -> anyhow::Result<()> {
                 if choice == "done" {
                     break;
                 }
-                let position = prompt::input_default(
-                    "Position (e.g., before_item 5)",
-                    "before_item 1",
-                )?;
+                let position =
+                    prompt::input_default("Position (e.g., before_item 5)", "before_item 1")?;
                 let content = if choice == "page_break" {
                     "".to_string()
                 } else {
@@ -121,7 +119,11 @@ pub fn run(args: InitPolicyArgs) -> anyhow::Result<()> {
         println!("  Questions: {}", policy.item_count);
         println!(
             "  Answer key: {}  Workings: {}",
-            if policy.include_answer_key { "yes" } else { "no" },
+            if policy.include_answer_key {
+                "yes"
+            } else {
+                "no"
+            },
             if policy.include_workings { "yes" } else { "no" }
         );
         println!("  Custom sections: {}", policy.custom_sections.len());
@@ -149,10 +151,7 @@ fn write_policy_with_header(
     path: &std::path::Path,
 ) -> anyhow::Result<()> {
     let mut yaml = serde_yaml::to_string(policy)?;
-    yaml = yaml.replace(
-        "item_count:",
-        "item_count:  # total questions",
-    );
+    yaml = yaml.replace("item_count:", "item_count:  # total questions");
     yaml = yaml.replace(
         "include_answer_key:",
         "include_answer_key:  # generate answer key PDF",

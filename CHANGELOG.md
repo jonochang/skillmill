@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2026-03-06
+### Added
+- Fraction curriculum expansion with componentized schemas for:
+  - Language
+  - Symbols
+  - Diagrams
+- Diagram-style fraction prompts using visual shaded bars in worksheet items.
+
+### Changed
+- Fraction generators now emit child-friendly prompts split by component and level progression.
+- Worksheet and answer-key templates now group fraction content into explicit section columns
+  (`Language`, `Symbols`, `Diagrams`) for clearer review and print flow.
+- Crate versions and package version bumped to `0.1.3`.
+
 ## [0.1.2] - 2026-03-05
 ### Added
 - Geometry curriculum coverage for P1-P3:

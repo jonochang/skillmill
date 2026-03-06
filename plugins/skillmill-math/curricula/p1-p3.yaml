@@ -70,6 +70,19 @@ nodes:
     schemas:
       - p2-geometry-2d-vertices-horizontal
       - p2-geometry-2d-vertices-vertical
+  p2-fractions-unit-fractions:
+    id: p2-fractions-unit-fractions
+    label: Fractions (unit fractions)
+    level: P2
+    prerequisites:
+      - p2-geometry-2d-vertices
+    schemas:
+      - p2-fractions-unit-fractions-language-horizontal
+      - p2-fractions-unit-fractions-language-vertical
+      - p2-fractions-unit-fractions-symbols-horizontal
+      - p2-fractions-unit-fractions-symbols-vertical
+      - p2-fractions-unit-fractions-diagrams-horizontal
+      - p2-fractions-unit-fractions-diagrams-vertical
   p3-add-sub-within-10000:
     id: p3-add-sub-within-10000
     label: Add & subtract within 10,000
@@ -106,3 +119,16 @@ nodes:
     schemas:
       - p3-geometry-3d-faces-horizontal
       - p3-geometry-3d-faces-vertical
+  p3-fractions-equivalent-fractions:
+    id: p3-fractions-equivalent-fractions
+    label: Fractions (equivalent fractions)
+    level: P3
+    prerequisites:
+      - p2-fractions-unit-fractions
+    schemas:
+      - p3-fractions-equivalent-fractions-language-horizontal
+      - p3-fractions-equivalent-fractions-language-vertical
+      - p3-fractions-equivalent-fractions-symbols-horizontal
+      - p3-fractions-equivalent-fractions-symbols-vertical
+      - p3-fractions-equivalent-fractions-diagrams-horizontal
+      - p3-fractions-equivalent-fractions-diagrams-vertical

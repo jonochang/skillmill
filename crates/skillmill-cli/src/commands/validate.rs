@@ -42,11 +42,19 @@ pub fn run(args: ValidateArgs) -> anyhow::Result<()> {
 
     for schema_id in schemas {
         for _ in 0..args.count {
-            let item = plugin.execute_schema(&SchemaId(schema_id.clone()), &mut rng, &DifficultyAxes::default())?;
+            let item = plugin.execute_schema(
+                &SchemaId(schema_id.clone()),
+                &mut rng,
+                &DifficultyAxes::default(),
+            )?;
             let result = plugin.validate_answer(&item);
             if !result.ok {
                 failures += 1;
-                println!("✗ {}: {}", schema_id, result.message.unwrap_or_else(|| "unknown".to_string()));
+                println!(
+                    "✗ {}: {}",
+                    schema_id,
+                    result.message.unwrap_or_else(|| "unknown".to_string())
+                );
                 break;
             }
         }

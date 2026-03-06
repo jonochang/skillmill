@@ -12,6 +12,6 @@ pub use plugin::{DisciplinePlugin, PluginRegistry};
 pub use policy::{Band, BandSource, WorksheetPolicy};
 pub use profile::{StudentProfile, WorksheetCustomisation};
 pub use schema::{
-    DifficultyAxes, GeneratedItem, RenderedAnswer, RenderedQuestion, RenderedWorking,
-    SchemaError, SchemaId, ValidationResult,
+    DifficultyAxes, GeneratedItem, RenderedAnswer, RenderedQuestion, RenderedWorking, SchemaError,
+    SchemaId, ValidationResult,
 };

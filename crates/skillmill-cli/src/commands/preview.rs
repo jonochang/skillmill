@@ -39,7 +39,11 @@ pub fn run(args: PreviewArgs) -> anyhow::Result<()> {
             .schemas
             .get((idx as usize) % node.schemas.len())
             .ok_or_else(|| anyhow::anyhow!("node has no schemas"))?;
-        let item = plugin.execute_schema(&SchemaId(schema_id.clone()), &mut rng, &DifficultyAxes::default())?;
+        let item = plugin.execute_schema(
+            &SchemaId(schema_id.clone()),
+            &mut rng,
+            &DifficultyAxes::default(),
+        )?;
         println!("{}.", idx + 1);
         println!("Q: {}", item.question.0);
         println!("A: {}", item.answer.0);

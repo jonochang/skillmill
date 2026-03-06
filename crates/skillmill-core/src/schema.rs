@@ -49,10 +49,16 @@ pub struct ValidationResult {
 
 impl ValidationResult {
     pub fn ok() -> Self {
-        Self { ok: true, message: None }
+        Self {
+            ok: true,
+            message: None,
+        }
     }
 
     pub fn fail(msg: impl Into<String>) -> Self {
-        Self { ok: false, message: Some(msg.into()) }
+        Self {
+            ok: false,
+            message: Some(msg.into()),
+        }
     }
 }

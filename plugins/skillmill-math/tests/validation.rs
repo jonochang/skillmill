@@ -11,7 +11,11 @@ fn validate_all_schemas_1000_samples() {
         for schema in &node.schemas {
             for _ in 0..1000 {
                 let item = plugin
-                    .execute_schema(&SchemaId(schema.clone()), &mut rng, &DifficultyAxes::default())
+                    .execute_schema(
+                        &SchemaId(schema.clone()),
+                        &mut rng,
+                        &DifficultyAxes::default(),
+                    )
                     .expect("execute schema");
                 let result = plugin.validate_answer(&item);
                 assert!(result.ok, "{} failed: {:?}", schema, result.message);
@@ -35,7 +39,11 @@ fn property_no_panics_10000_iterations() {
     for _ in 0..10_000 {
         let schema = &schemas[(rng.next_u32() as usize) % schemas.len()];
         let _ = plugin
-            .execute_schema(&SchemaId(schema.clone()), &mut rng, &DifficultyAxes::default())
+            .execute_schema(
+                &SchemaId(schema.clone()),
+                &mut rng,
+                &DifficultyAxes::default(),
+            )
             .expect("execute schema");
     }
 }

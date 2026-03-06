@@ -1,13 +1,13 @@
-use rand::prelude::IndexedRandom;
 use rand::Rng;
 use rand::RngCore;
+use rand::prelude::IndexedRandom;
+use skillmill_core::DisciplinePlugin;
 use skillmill_core::curriculum::CurriculumGraph;
 use skillmill_core::policy::{Band, BandSource};
 use skillmill_core::schema::{
     DifficultyAxes, GeneratedItem, RenderedAnswer, RenderedQuestion, SchemaError, SchemaId,
     ValidationResult,
 };
-use skillmill_core::DisciplinePlugin;
 use std::path::{Path, PathBuf};
 
 pub struct MathPlugin {
@@ -21,9 +21,12 @@ impl MathPlugin {
             .join("curricula")
             .join("p1-p3.yaml");
         let curriculum = CurriculumGraph::load_from_file(&curriculum_path)?;
-        let template_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../templates/disciplines/math");
-        Ok(Self { curriculum, template_dir })
+        let template_dir =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../templates/disciplines/math");
+        Ok(Self {
+            curriculum,
+            template_dir,
+        })
     }
 
     fn node_id_for_schema(&self, schema_id: &SchemaId) -> Option<String> {
@@ -50,9 +53,21 @@ impl DisciplinePlugin for MathPlugin {
 
     fn default_composition(&self) -> Vec<Band> {
         vec![
-            Band { source: BandSource::TargetNode, weight: 0.70, item_types: vec!["drill".into()] },
-            Band { source: BandSource::Prerequisites, weight: 0.20, item_types: vec!["drill".into()] },
-            Band { source: BandSource::NonRoutine, weight: 0.10, item_types: vec!["drill".into()] },
+            Band {
+                source: BandSource::TargetNode,
+                weight: 0.70,
+                item_types: vec!["drill".into()],
+            },
+            Band {
+                source: BandSource::Prerequisites,
+                weight: 0.20,
+                item_types: vec!["drill".into()],
+            },
+            Band {
+                source: BandSource::NonRoutine,
+                weight: 0.10,
+                item_types: vec!["drill".into()],
+            },
         ]
     }
 
@@ -74,11 +89,21 @@ impl DisciplinePlugin for MathPlugin {
             Some(SchemaSpec::Divide { tables }) => {
                 Ok(generate_divide(schema_id, &node_id, rng, tables))
             }
-            Some(SchemaSpec::GeometrySides) => Ok(generate_geometry_sides(schema_id, &node_id, rng)),
+            Some(SchemaSpec::FractionUnit { max_den, component }) => Ok(generate_fraction_unit(
+                schema_id, &node_id, rng, max_den, component,
+            )),
+            Some(SchemaSpec::FractionEquivalent { max_den, component }) => Ok(
+                generate_fraction_equivalent(schema_id, &node_id, rng, max_den, component),
+            ),
+            Some(SchemaSpec::GeometrySides) => {
+                Ok(generate_geometry_sides(schema_id, &node_id, rng))
+            }
             Some(SchemaSpec::GeometryVertices) => {
                 Ok(generate_geometry_vertices(schema_id, &node_id, rng))
             }
-            Some(SchemaSpec::GeometryFaces) => Ok(generate_geometry_faces(schema_id, &node_id, rng)),
+            Some(SchemaSpec::GeometryFaces) => {
+                Ok(generate_geometry_faces(schema_id, &node_id, rng))
+            }
             None => Err(SchemaError::NotFound(schema_id.0.clone())),
         }
     }
@@ -89,10 +114,7 @@ impl DisciplinePlugin for MathPlugin {
                 if answer == item.answer.0 {
                     ValidationResult::ok()
                 } else {
-                    ValidationResult::fail(format!(
-                        "expected {} but got {}",
-                        answer, item.answer.0
-                    ))
+                    ValidationResult::fail(format!("expected {} but got {}", answer, item.answer.0))
                 }
             }
             Err(err) => ValidationResult::fail(err),
@@ -106,13 +128,36 @@ impl DisciplinePlugin for MathPlugin {
 
 #[derive(Copy, Clone)]
 enum SchemaSpec {
-    Count { max: u32 },
-    AddSub { max: u32 },
-    Multiply { tables: &'static [u32] },
-    Divide { tables: &'static [u32] },
+    Count {
+        max: u32,
+    },
+    AddSub {
+        max: u32,
+    },
+    Multiply {
+        tables: &'static [u32],
+    },
+    Divide {
+        tables: &'static [u32],
+    },
+    FractionUnit {
+        max_den: u32,
+        component: FractionComponent,
+    },
+    FractionEquivalent {
+        max_den: u32,
+        component: FractionComponent,
+    },
     GeometrySides,
     GeometryVertices,
     GeometryFaces,
+}
+
+#[derive(Copy, Clone)]
+enum FractionComponent {
+    Language,
+    Symbols,
+    Diagrams,
 }
 
 fn schema_spec(id: &str) -> Option<SchemaSpec> {
@@ -139,13 +184,40 @@ fn schema_spec(id: &str) -> Option<SchemaSpec> {
             return Some(SchemaSpec::AddSub { max: 100 });
         }
         "p2-multiply-2-3-4-5-10-horizontal" | "p2-multiply-2-3-4-5-10-vertical" => {
-            return Some(SchemaSpec::Multiply { tables: &[2, 3, 4, 5, 10] });
+            return Some(SchemaSpec::Multiply {
+                tables: &[2, 3, 4, 5, 10],
+            });
         }
         "p2-divide-2-3-4-5-10-horizontal" | "p2-divide-2-3-4-5-10-vertical" => {
-            return Some(SchemaSpec::Divide { tables: &[2, 3, 4, 5, 10] });
+            return Some(SchemaSpec::Divide {
+                tables: &[2, 3, 4, 5, 10],
+            });
         }
         "p2-geometry-2d-vertices-horizontal" | "p2-geometry-2d-vertices-vertical" => {
             return Some(SchemaSpec::GeometryVertices);
+        }
+        "p2-fractions-unit-fractions-language-horizontal"
+        | "p2-fractions-unit-fractions-language-vertical" => {
+            return Some(SchemaSpec::FractionUnit {
+                max_den: 12,
+                component: FractionComponent::Language,
+            });
+        }
+        "p2-fractions-unit-fractions-symbols-horizontal"
+        | "p2-fractions-unit-fractions-symbols-vertical"
+        | "p2-fractions-unit-fractions-horizontal"
+        | "p2-fractions-unit-fractions-vertical" => {
+            return Some(SchemaSpec::FractionUnit {
+                max_den: 12,
+                component: FractionComponent::Symbols,
+            });
+        }
+        "p2-fractions-unit-fractions-diagrams-horizontal"
+        | "p2-fractions-unit-fractions-diagrams-vertical" => {
+            return Some(SchemaSpec::FractionUnit {
+                max_den: 12,
+                component: FractionComponent::Diagrams,
+            });
         }
         _ => {}
     }
@@ -156,13 +228,40 @@ fn schema_spec(id: &str) -> Option<SchemaSpec> {
             return Some(SchemaSpec::AddSub { max: 10_000 });
         }
         "p3-multiply-6-7-8-9-horizontal" | "p3-multiply-6-7-8-9-vertical" => {
-            return Some(SchemaSpec::Multiply { tables: &[6, 7, 8, 9] });
+            return Some(SchemaSpec::Multiply {
+                tables: &[6, 7, 8, 9],
+            });
         }
         "p3-divide-6-7-8-9-horizontal" | "p3-divide-6-7-8-9-vertical" => {
-            return Some(SchemaSpec::Divide { tables: &[6, 7, 8, 9] });
+            return Some(SchemaSpec::Divide {
+                tables: &[6, 7, 8, 9],
+            });
         }
         "p3-geometry-3d-faces-horizontal" | "p3-geometry-3d-faces-vertical" => {
             return Some(SchemaSpec::GeometryFaces);
+        }
+        "p3-fractions-equivalent-fractions-language-horizontal"
+        | "p3-fractions-equivalent-fractions-language-vertical" => {
+            return Some(SchemaSpec::FractionEquivalent {
+                max_den: 12,
+                component: FractionComponent::Language,
+            });
+        }
+        "p3-fractions-equivalent-fractions-symbols-horizontal"
+        | "p3-fractions-equivalent-fractions-symbols-vertical"
+        | "p3-fractions-equivalent-fractions-horizontal"
+        | "p3-fractions-equivalent-fractions-vertical" => {
+            return Some(SchemaSpec::FractionEquivalent {
+                max_den: 12,
+                component: FractionComponent::Symbols,
+            });
+        }
+        "p3-fractions-equivalent-fractions-diagrams-horizontal"
+        | "p3-fractions-equivalent-fractions-diagrams-vertical" => {
+            return Some(SchemaSpec::FractionEquivalent {
+                max_den: 12,
+                component: FractionComponent::Diagrams,
+            });
         }
         _ => {}
     }
@@ -287,7 +386,128 @@ fn generate_divide(
     }
 }
 
-fn generate_geometry_sides(schema_id: &SchemaId, node_id: &str, rng: &mut dyn RngCore) -> GeneratedItem {
+fn generate_fraction_unit(
+    schema_id: &SchemaId,
+    node_id: &str,
+    rng: &mut dyn RngCore,
+    max_den: u32,
+    component: FractionComponent,
+) -> GeneratedItem {
+    let denominator = rng.gen_range(2..=max_den.max(2));
+    let _vertical = schema_id.0.ends_with("vertical");
+    let question = match component {
+        FractionComponent::Language => format!(
+            "Language: One part out of {} equal parts is what fraction? ___",
+            denominator
+        ),
+        FractionComponent::Symbols => format!(
+            "Symbols: Write the unit fraction with denominator {}: ___",
+            denominator
+        ),
+        FractionComponent::Diagrams => {
+            let bar = fraction_bar(1, denominator);
+            format!("Diagrams: {}  What fraction is shaded? ___", bar)
+        }
+    };
+
+    GeneratedItem {
+        node_id: node_id.to_string(),
+        schema_id: schema_id.clone(),
+        question: RenderedQuestion(question),
+        answer: RenderedAnswer(format!("1/{}", denominator)),
+        working: None,
+        visuals: vec![],
+    }
+}
+
+fn generate_fraction_equivalent(
+    schema_id: &SchemaId,
+    node_id: &str,
+    rng: &mut dyn RngCore,
+    max_den: u32,
+    component: FractionComponent,
+) -> GeneratedItem {
+    let denominator = rng.gen_range(2..=max_den.max(3));
+    let numerator = rng.gen_range(1..denominator);
+    let factor = rng.gen_range(2..=4);
+    let expanded_num = numerator * factor;
+    let expanded_den = denominator * factor;
+    let missing_numerator = rng.gen_bool(0.5);
+    let _vertical = schema_id.0.ends_with("vertical");
+
+    let (question, answer) = match component {
+        FractionComponent::Language => {
+            if missing_numerator {
+                let q = format!(
+                    "Language: {} out of {} equals how many out of {}? ___",
+                    numerator, denominator, expanded_den
+                );
+                (q, expanded_num.to_string())
+            } else {
+                let q = format!(
+                    "Language: {} out of {} equals {} out of how many? ___",
+                    numerator, denominator, expanded_num
+                );
+                (q, expanded_den.to_string())
+            }
+        }
+        FractionComponent::Symbols => {
+            if missing_numerator {
+                let q = format!(
+                    "Symbols: Find the missing number: {}/{} = ___/{}",
+                    numerator, denominator, expanded_den
+                );
+                (q, expanded_num.to_string())
+            } else {
+                let q = format!(
+                    "Symbols: Find the missing number: {}/{} = {}/___",
+                    numerator, denominator, expanded_num
+                );
+                (q, expanded_den.to_string())
+            }
+        }
+        FractionComponent::Diagrams => {
+            let left_bar = fraction_bar(numerator, denominator);
+            let right_bar = fraction_bar(expanded_num, expanded_den);
+            if missing_numerator {
+                let q = format!(
+                    "Diagrams: {} = {}  Complete: {}/{} = ___/{}",
+                    left_bar, right_bar, numerator, denominator, expanded_den
+                );
+                (q, expanded_num.to_string())
+            } else {
+                let q = format!(
+                    "Diagrams: {} = {}  Complete: {}/{} = {}/___",
+                    left_bar, right_bar, numerator, denominator, expanded_num
+                );
+                (q, expanded_den.to_string())
+            }
+        }
+    };
+
+    GeneratedItem {
+        node_id: node_id.to_string(),
+        schema_id: schema_id.clone(),
+        question: RenderedQuestion(question),
+        answer: RenderedAnswer(answer),
+        working: None,
+        visuals: vec![],
+    }
+}
+
+fn fraction_bar(shaded: u32, total: u32) -> String {
+    let clamped_total = total.clamp(2, 16);
+    let clamped_shaded = shaded.min(clamped_total);
+    let filled = "■".repeat(clamped_shaded as usize);
+    let empty = "□".repeat((clamped_total - clamped_shaded) as usize);
+    format!("[{}{}]", filled, empty)
+}
+
+fn generate_geometry_sides(
+    schema_id: &SchemaId,
+    node_id: &str,
+    rng: &mut dyn RngCore,
+) -> GeneratedItem {
     let _ = schema_id;
     let shapes = ["triangle", "square", "rectangle", "pentagon", "hexagon"];
     let shape = *shapes.choose(rng).unwrap_or(&"triangle");
@@ -309,7 +529,14 @@ fn generate_geometry_vertices(
     rng: &mut dyn RngCore,
 ) -> GeneratedItem {
     let _ = schema_id;
-    let shapes = ["triangle", "square", "rectangle", "pentagon", "hexagon", "octagon"];
+    let shapes = [
+        "triangle",
+        "square",
+        "rectangle",
+        "pentagon",
+        "hexagon",
+        "octagon",
+    ];
     let shape = *shapes.choose(rng).unwrap_or(&"triangle");
     let answer = shape_vertices(shape).unwrap_or(3);
     let question = geometry_vertices_question(shape, rng);
@@ -323,7 +550,11 @@ fn generate_geometry_vertices(
     }
 }
 
-fn generate_geometry_faces(schema_id: &SchemaId, node_id: &str, rng: &mut dyn RngCore) -> GeneratedItem {
+fn generate_geometry_faces(
+    schema_id: &SchemaId,
+    node_id: &str,
+    rng: &mut dyn RngCore,
+) -> GeneratedItem {
     let _ = schema_id;
     let solids = [
         ("cube", "cube"),
@@ -346,6 +577,13 @@ fn generate_geometry_faces(schema_id: &SchemaId, node_id: &str, rng: &mut dyn Rn
 }
 
 fn compute_answer(question: &str) -> Result<String, String> {
+    if let Some(geometry_answer) = compute_geometry_answer(question) {
+        return Ok(geometry_answer.to_string());
+    }
+    if let Some(fraction_answer) = compute_fraction_answer(question) {
+        return Ok(fraction_answer);
+    }
+
     let mut nums = Vec::new();
     let mut current = String::new();
     let mut op = None;
@@ -372,9 +610,6 @@ fn compute_answer(question: &str) -> Result<String, String> {
     }
 
     if op.is_none() {
-        if let Some(geometry_answer) = compute_geometry_answer(question) {
-            return Ok(geometry_answer.to_string());
-        }
         if nums.len() == 1 {
             return Ok(nums[0].to_string());
         }
@@ -402,6 +637,156 @@ fn compute_answer(question: &str) -> Result<String, String> {
     };
 
     Ok(result.to_string())
+}
+
+fn compute_fraction_answer(question: &str) -> Option<String> {
+    if let Some(denominator) = extract_after_marker(question, "denominator ") {
+        return Some(format!("1/{}", denominator));
+    }
+
+    let compact = question.replace('\n', " ");
+    let lower = compact.to_lowercase();
+
+    if compact.contains("___/") || compact.contains("/___") {
+        let tokens: Vec<&str> = compact
+            .split_whitespace()
+            .filter(|token| token.contains('/'))
+            .collect();
+        if tokens.len() < 2 {
+            return None;
+        }
+
+        let left = tokens[0];
+        let right = tokens[1];
+        let (left_num, left_den) = parse_fraction_token(left)?;
+
+        if let Some(stripped) = right.strip_prefix("___/") {
+            let right_den = stripped.parse::<u32>().ok()?;
+            if left_den == 0 {
+                return None;
+            }
+            return Some((left_num * right_den / left_den).to_string());
+        }
+
+        if let Some(stripped) = right.strip_suffix("/___") {
+            let right_num = stripped.parse::<u32>().ok()?;
+            if left_num == 0 {
+                return None;
+            }
+            return Some((left_den * right_num / left_num).to_string());
+        }
+
+        return None;
+    }
+
+    if lower.contains("equals how many out of") {
+        let nums = extract_numbers(&compact);
+        if nums.len() >= 3 {
+            let left_num = nums[0];
+            let left_den = nums[1];
+            let right_den = nums[2];
+            if left_den == 0 {
+                return None;
+            }
+            return Some((left_num * right_den / left_den).to_string());
+        }
+    }
+
+    if lower.contains("out of how many") {
+        let nums = extract_numbers(&compact);
+        if nums.len() >= 3 {
+            let left_num = nums[0];
+            let left_den = nums[1];
+            let right_num = nums[2];
+            if left_num == 0 {
+                return None;
+            }
+            return Some((left_den * right_num / left_num).to_string());
+        }
+    }
+
+    if lower.contains("what fraction is shaded") {
+        if let Some((shaded, total)) = parse_fraction_bar_counts(question) {
+            if total > 0 {
+                return Some(format!("{}/{}", shaded, total));
+            }
+        }
+    }
+
+    let is_unit_fraction_prompt = lower.contains("unit fraction")
+        || lower.contains("fraction symbol")
+        || lower.contains("one part out of")
+        || lower.contains("one out of")
+        || lower.contains("read and write")
+        || lower.contains("complete the fraction")
+        || lower.contains("equal parts")
+        || (compact.contains("1/") && compact.contains("___"));
+    if !is_unit_fraction_prompt || compact.contains("___/") || compact.contains("/___") {
+        return None;
+    }
+
+    let nums = extract_numbers(&compact);
+    if nums.len() >= 2 && nums[0] == 1 {
+        return Some(format!("1/{}", nums[1]));
+    }
+    nums.last().map(|denominator| format!("1/{}", denominator))
+}
+
+fn parse_fraction_bar_counts(input: &str) -> Option<(u32, u32)> {
+    let start = input.find('[')?;
+    let rest = &input[start + 1..];
+    let end_rel = rest.find(']')?;
+    let bar = &rest[..end_rel];
+    let shaded = bar.chars().filter(|c| *c == '■').count() as u32;
+    let empty = bar.chars().filter(|c| *c == '□').count() as u32;
+    let total = shaded + empty;
+    if total == 0 {
+        None
+    } else {
+        Some((shaded, total))
+    }
+}
+
+fn extract_after_marker(input: &str, marker: &str) -> Option<u32> {
+    let idx = input.find(marker)?;
+    let suffix = &input[idx + marker.len()..];
+    let digits: String = suffix.chars().take_while(|c| c.is_ascii_digit()).collect();
+    if digits.is_empty() {
+        None
+    } else {
+        digits.parse::<u32>().ok()
+    }
+}
+
+fn extract_numbers(input: &str) -> Vec<u32> {
+    let mut nums = Vec::new();
+    let mut current = String::new();
+    for ch in input.chars() {
+        if ch.is_ascii_digit() {
+            current.push(ch);
+        } else if !current.is_empty() {
+            if let Ok(n) = current.parse::<u32>() {
+                nums.push(n);
+            }
+            current.clear();
+        }
+    }
+    if !current.is_empty() {
+        if let Ok(n) = current.parse::<u32>() {
+            nums.push(n);
+        }
+    }
+    nums
+}
+
+fn parse_fraction_token(token: &str) -> Option<(u32, u32)> {
+    let parts: Vec<&str> = token.split('/').collect();
+    if parts.len() != 2 {
+        return None;
+    }
+    let num = parts[0].parse::<u32>().ok()?;
+    let den = parts[1].parse::<u32>().ok()?;
+    Some((num, den))
 }
 
 fn compute_geometry_answer(question: &str) -> Option<u32> {
@@ -506,11 +891,17 @@ fn geometry_sides_question(shape: &str, rng: &mut dyn RngCore) -> String {
     match rng.gen_range(0..8) {
         0 => format!("How many sides does {article} {shape} have? ___"),
         1 => format!("Count the sides of {article} {shape}: ___"),
-        2 => format!("{article_cap} {shape} has ___ sides.", article_cap = capitalize(article)),
+        2 => format!(
+            "{article_cap} {shape} has ___ sides.",
+            article_cap = capitalize(article)
+        ),
         3 => format!("Write the number of sides in {article} {shape}: ___"),
         4 => format!("Number of sides in {article} {shape} = ___"),
         5 => format!("How many sides are on {article} {shape}? ___"),
-        6 => format!("Fill in the blank: {article_cap} {shape} has ___ sides.", article_cap = capitalize(article)),
+        6 => format!(
+            "Fill in the blank: {article_cap} {shape} has ___ sides.",
+            article_cap = capitalize(article)
+        ),
         _ => format!("Sides of {article} {shape}: ___"),
     }
 }
@@ -520,11 +911,17 @@ fn geometry_vertices_question(shape: &str, rng: &mut dyn RngCore) -> String {
     match rng.gen_range(0..8) {
         0 => format!("How many corners does {article} {shape} have? ___"),
         1 => format!("Count the corners of {article} {shape}: ___"),
-        2 => format!("{article_cap} {shape} has ___ corners.", article_cap = capitalize(article)),
+        2 => format!(
+            "{article_cap} {shape} has ___ corners.",
+            article_cap = capitalize(article)
+        ),
         3 => format!("Write the number of corners in {article} {shape}: ___"),
         4 => format!("Number of corners in {article} {shape} = ___"),
         5 => format!("How many vertices does {article} {shape} have? ___"),
-        6 => format!("Fill in the blank: {article_cap} {shape} has ___ corners.", article_cap = capitalize(article)),
+        6 => format!(
+            "Fill in the blank: {article_cap} {shape} has ___ corners.",
+            article_cap = capitalize(article)
+        ),
         _ => format!("Corners of {article} {shape}: ___"),
     }
 }
@@ -534,11 +931,17 @@ fn geometry_faces_question(solid: &str, rng: &mut dyn RngCore) -> String {
     match rng.gen_range(0..8) {
         0 => format!("How many faces does {article} {solid} have? ___"),
         1 => format!("Count the faces of {article} {solid}: ___"),
-        2 => format!("{article_cap} {solid} has ___ faces.", article_cap = capitalize(article)),
+        2 => format!(
+            "{article_cap} {solid} has ___ faces.",
+            article_cap = capitalize(article)
+        ),
         3 => format!("Write the number of faces in {article} {solid}: ___"),
         4 => format!("Number of faces in {article} {solid} = ___"),
         5 => format!("How many flat faces are on {article} {solid}? ___"),
-        6 => format!("Fill in the blank: {article_cap} {solid} has ___ faces.", article_cap = capitalize(article)),
+        6 => format!(
+            "Fill in the blank: {article_cap} {solid} has ___ faces.",
+            article_cap = capitalize(article)
+        ),
         _ => format!("Faces of {article} {solid}: ___"),
     }
 }
@@ -574,10 +977,20 @@ mod tests {
         for schema in [
             "p1-add-sub-within-10-horizontal",
             "p2-multiply-2-3-4-5-10-vertical",
+            "p2-fractions-unit-fractions-language-horizontal",
+            "p2-fractions-unit-fractions-symbols-vertical",
+            "p2-fractions-unit-fractions-diagrams-horizontal",
             "p3-divide-6-7-8-9-horizontal",
+            "p3-fractions-equivalent-fractions-language-horizontal",
+            "p3-fractions-equivalent-fractions-symbols-vertical",
+            "p3-fractions-equivalent-fractions-diagrams-horizontal",
         ] {
             let item = plugin
-                .execute_schema(&SchemaId(schema.to_string()), &mut rng, &DifficultyAxes::default())
+                .execute_schema(
+                    &SchemaId(schema.to_string()),
+                    &mut rng,
+                    &DifficultyAxes::default(),
+                )
                 .expect("execute");
             let validation = plugin.validate_answer(&item);
             assert!(validation.ok, "{schema} validation failed");
