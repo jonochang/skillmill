@@ -11,6 +11,7 @@ use std::collections::HashSet;
 pub struct WorksheetSpec {
     pub profile: StudentProfile,
     pub policy: WorksheetPolicy,
+    pub template_style: String,
     pub items: Vec<GeneratedItem>,
     pub sections: Vec<WorksheetSection>,
 }
@@ -56,9 +57,16 @@ impl Composer {
         }
 
         let sections = inject_custom_sections(&items, &policy.custom_sections);
+        let template_style = plugin
+            .curriculum()
+            .node(&NodeId(policy.target_node.clone()))
+            .and_then(|node| node.template_style.clone())
+            .unwrap_or_else(|| "commoncore-portrait".to_string());
+
         Ok(WorksheetSpec {
             profile,
             policy,
+            template_style,
             items,
             sections,
         })

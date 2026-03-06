@@ -101,10 +101,8 @@ fn slugify(input: &str) -> String {
     for ch in input.chars() {
         if ch.is_ascii_alphanumeric() {
             slug.push(ch.to_ascii_lowercase());
-        } else if ch.is_whitespace() || ch == '-' {
-            if !slug.ends_with('-') {
-                slug.push('-');
-            }
+        } else if (ch.is_whitespace() || ch == '-') && !slug.ends_with('-') {
+            slug.push('-');
         }
     }
     slug.trim_matches('-').to_string()

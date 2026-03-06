@@ -1,5 +1,7 @@
+use rand::Rng;
 use rand::SeedableRng;
 use rand::rngs::StdRng;
+use skillmill_core::plugin::DisciplinePlugin;
 use skillmill_core::schema::{DifficultyAxes, SchemaId};
 
 #[test]
@@ -37,7 +39,7 @@ fn property_no_panics_10000_iterations() {
         .collect();
 
     for _ in 0..10_000 {
-        let schema = &schemas[(rng.next_u32() as usize) % schemas.len()];
+        let schema = &schemas[rng.random_range(0..schemas.len())];
         let _ = plugin
             .execute_schema(
                 &SchemaId(schema.clone()),

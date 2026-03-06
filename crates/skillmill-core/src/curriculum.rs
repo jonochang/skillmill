@@ -23,6 +23,8 @@ pub struct Node {
     pub label: String,
     pub level: Level,
     #[serde(default)]
+    pub template_style: Option<String>,
+    #[serde(default)]
     pub prerequisites: Vec<NodeId>,
     #[serde(default)]
     pub schemas: Vec<String>,

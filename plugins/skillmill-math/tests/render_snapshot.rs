@@ -1,4 +1,5 @@
 use skillmill_core::compose::{WorksheetSection, WorksheetSpec};
+use skillmill_core::plugin::DisciplinePlugin;
 use skillmill_core::policy::{Band, BandSource, CustomSection, WorksheetPolicy};
 use skillmill_core::profile::{
     StudentProfile, WorksheetCustomisation, WorksheetHeader, WorksheetLayout,
@@ -80,6 +81,7 @@ fn render_snapshot_json() {
     let spec = WorksheetSpec {
         profile,
         policy: policy.clone(),
+        template_style: "commoncore-portrait".to_string(),
         items: vec![item1, item2],
         sections,
     };

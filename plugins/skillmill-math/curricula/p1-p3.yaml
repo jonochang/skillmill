@@ -3,6 +3,7 @@ nodes:
     id: p1-numbers-count-to-100
     label: Count and write to 100
     level: P1
+    template_style: commoncore-portrait
     prerequisites: []
     schemas:
       - p1-count-to-100-horizontal
@@ -11,6 +12,7 @@ nodes:
     id: p1-add-sub-within-10
     label: Add & subtract within 10
     level: P1
+    template_style: commoncore-portrait
     prerequisites:
       - p1-numbers-count-to-100
     schemas:
@@ -20,6 +22,7 @@ nodes:
     id: p1-add-sub-within-20
     label: Add & subtract within 20
     level: P1
+    template_style: commoncore-portrait
     prerequisites:
       - p1-add-sub-within-10
     schemas:
@@ -29,6 +32,7 @@ nodes:
     id: p1-geometry-2d-sides
     label: 2D shapes (number of sides)
     level: P1
+    template_style: commoncore-portrait
     prerequisites:
       - p1-numbers-count-to-100
     schemas:
@@ -38,6 +42,7 @@ nodes:
     id: p2-add-sub-within-100
     label: Add & subtract within 100
     level: P2
+    template_style: commoncore-portrait
     prerequisites:
       - p1-add-sub-within-20
     schemas:
@@ -47,6 +52,7 @@ nodes:
     id: p2-multiply-2-3-4-5-10
     label: Multiply (2, 3, 4, 5, 10 times tables)
     level: P2
+    template_style: landscape-drill
     prerequisites:
       - p2-add-sub-within-100
     schemas:
@@ -56,6 +62,7 @@ nodes:
     id: p2-divide-2-3-4-5-10
     label: Divide (2, 3, 4, 5, 10 times tables)
     level: P2
+    template_style: landscape-drill
     prerequisites:
       - p2-multiply-2-3-4-5-10
     schemas:
@@ -65,6 +72,7 @@ nodes:
     id: p2-fractions-identify-shaded
     label: Fractions (identify shaded parts)
     level: P2
+    template_style: commoncore-portrait
     prerequisites:
       - p1-numbers-count-to-100
     schemas:
@@ -74,6 +82,7 @@ nodes:
     id: p2-geometry-2d-vertices
     label: 2D shapes (number of vertices)
     level: P2
+    template_style: commoncore-portrait
     prerequisites:
       - p1-geometry-2d-sides
     schemas:
@@ -96,6 +105,7 @@ nodes:
     id: p3-add-sub-within-10000
     label: Add & subtract within 10,000
     level: P3
+    template_style: landscape-drill
     prerequisites:
       - p2-add-sub-within-100
     schemas:
@@ -105,6 +115,7 @@ nodes:
     id: p3-multiply-6-7-8-9
     label: Multiply (6, 7, 8, 9 times tables)
     level: P3
+    template_style: landscape-drill
     prerequisites:
       - p2-multiply-2-3-4-5-10
     schemas:
@@ -114,6 +125,7 @@ nodes:
     id: p3-divide-6-7-8-9
     label: Divide (6, 7, 8, 9 times tables)
     level: P3
+    template_style: landscape-drill
     prerequisites:
       - p2-divide-2-3-4-5-10
     schemas:
@@ -123,6 +135,7 @@ nodes:
     id: p3-geometry-3d-faces
     label: 3D solids (number of faces)
     level: P3
+    template_style: commoncore-portrait
     prerequisites:
       - p2-geometry-2d-vertices
     schemas:

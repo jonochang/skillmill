@@ -45,7 +45,7 @@ pub fn run(args: InitProfileArgs) -> anyhow::Result<()> {
 
         let working_space_idx = prompt::select(
             "Working space per question",
-            &vec!["small".into(), "medium".into(), "large".into()],
+            &["small".into(), "medium".into(), "large".into()],
         )?;
         let working_space = match working_space_idx {
             0 => "small",

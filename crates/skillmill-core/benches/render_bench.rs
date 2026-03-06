@@ -2,6 +2,7 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use rand::SeedableRng;
 use rand::rngs::StdRng;
 use skillmill_core::compose::Composer;
+use skillmill_core::plugin::DisciplinePlugin;
 use skillmill_core::policy::{Band, BandSource, WorksheetPolicy};
 use skillmill_core::profile::{
     StudentProfile, WorksheetCustomisation, WorksheetHeader, WorksheetLayout,

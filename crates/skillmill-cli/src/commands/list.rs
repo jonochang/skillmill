@@ -34,10 +34,7 @@ pub fn run(args: ListArgs) -> anyhow::Result<()> {
                 .ok_or_else(|| anyhow::anyhow!("unknown discipline: {}", discipline))?;
             let mut nodes: Vec<_> = plugin.curriculum().nodes.values().collect();
             if let Some(level) = level {
-                nodes = nodes
-                    .into_iter()
-                    .filter(|n| n.level.0.eq_ignore_ascii_case(&level))
-                    .collect();
+                nodes.retain(|n| n.level.0.eq_ignore_ascii_case(&level));
             }
             nodes.sort_by(|a, b| a.id.0.cmp(&b.id.0));
             for node in nodes {

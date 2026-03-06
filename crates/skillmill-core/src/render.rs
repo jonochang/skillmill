@@ -48,8 +48,9 @@ impl RenderPipeline {
 
         let student_pdf = out_dir.join("student.pdf");
         let student_png = out_dir.join("student.png");
-        let worksheet_template = self.template_dir.join("worksheet.typ");
-        let answer_template = self.template_dir.join("answer-key.typ");
+        let resolved_template_dir = resolve_template_dir(&self.template_dir, &spec.template_style);
+        let worksheet_template = resolved_template_dir.join("worksheet.typ");
+        let answer_template = resolved_template_dir.join("answer-key.typ");
         let answer_pdf = out_dir.join("answer-key.pdf");
         let answer_png = out_dir.join("answer-key.png");
 
@@ -104,6 +105,15 @@ impl RenderPipeline {
             answer_key_pdf,
             answer_key_png,
         })
+    }
+}
+
+fn resolve_template_dir(template_root: &Path, template_style: &str) -> PathBuf {
+    let styled_dir = template_root.join(template_style);
+    if !template_style.is_empty() && styled_dir.is_dir() {
+        styled_dir
+    } else {
+        template_root.to_path_buf()
     }
 }
 

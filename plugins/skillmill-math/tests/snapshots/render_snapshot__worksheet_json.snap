@@ -1,0 +1,98 @@
+---
+source: plugins/skillmill-math/tests/render_snapshot.rs
+assertion_line: 80
+expression: json
+---
+{
+  "profile": {
+    "name": "Snapshot Student",
+    "discipline": "math-singapore",
+    "current_node": "p2-add-sub-within-100",
+    "mastery": {},
+    "customisations": {
+      "header": {
+        "school": "Test School",
+        "class": "2A",
+        "date": "2026-03-03"
+      },
+      "layout": {
+        "font_size": 12,
+        "working_space": "medium"
+      }
+    }
+  },
+  "policy": {
+    "discipline": "math-singapore",
+    "target_node": "p2-add-sub-within-100",
+    "composition": [
+      {
+        "source": "target_node",
+        "weight": 1.0,
+        "item_types": [
+          "drill"
+        ]
+      }
+    ],
+    "item_count": 2,
+    "include_answer_key": true,
+    "include_workings": false,
+    "custom_sections": [
+      {
+        "position": "before_item 2",
+        "type": "free_text",
+        "content": "Nice work!"
+      }
+    ]
+  },
+  "template_style": "commoncore-portrait",
+  "items": [
+    {
+      "node_id": "p2-add-sub-within-100",
+      "schema_id": "p2-add-sub-within-100-horizontal",
+      "question": "12 + 8 = ___",
+      "answer": "20",
+      "working": null,
+      "visuals": []
+    },
+    {
+      "node_id": "p2-add-sub-within-100",
+      "schema_id": "p2-add-sub-within-100-vertical",
+      "question": "45\n- 7\n= ___",
+      "answer": "38",
+      "working": null,
+      "visuals": []
+    }
+  ],
+  "sections": [
+    {
+      "type": "item",
+      "number": 1,
+      "item": {
+        "node_id": "p2-add-sub-within-100",
+        "schema_id": "p2-add-sub-within-100-horizontal",
+        "question": "12 + 8 = ___",
+        "answer": "20",
+        "working": null,
+        "visuals": []
+      }
+    },
+    {
+      "type": "custom",
+      "position": "before_item 2",
+      "kind": "free_text",
+      "content": "Nice work!"
+    },
+    {
+      "type": "item",
+      "number": 2,
+      "item": {
+        "node_id": "p2-add-sub-within-100",
+        "schema_id": "p2-add-sub-within-100-vertical",
+        "question": "45\n- 7\n= ___",
+        "answer": "38",
+        "working": null,
+        "visuals": []
+      }
+    }
+  ]
+}
