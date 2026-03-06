@@ -61,6 +61,15 @@ nodes:
     schemas:
       - p2-divide-2-3-4-5-10-horizontal
       - p2-divide-2-3-4-5-10-vertical
+  p2-fractions-identify-shaded:
+    id: p2-fractions-identify-shaded
+    label: Fractions (identify shaded parts)
+    level: P2
+    prerequisites:
+      - p1-numbers-count-to-100
+    schemas:
+      - p2-fractions-identify-shaded-horizontal
+      - p2-fractions-identify-shaded-vertical
   p2-geometry-2d-vertices:
     id: p2-geometry-2d-vertices
     label: 2D shapes (number of vertices)

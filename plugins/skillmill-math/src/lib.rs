@@ -1,8 +1,8 @@
 use rand::Rng;
 use rand::RngCore;
 use rand::prelude::IndexedRandom;
-use skillmill_core::DisciplinePlugin;
 use serde_json::json;
+use skillmill_core::DisciplinePlugin;
 use skillmill_core::curriculum::CurriculumGraph;
 use skillmill_core::policy::{Band, BandSource};
 use skillmill_core::schema::{
@@ -96,6 +96,9 @@ impl DisciplinePlugin for MathPlugin {
             Some(SchemaSpec::FractionEquivalent { max_den, component }) => Ok(
                 generate_fraction_equivalent(schema_id, &node_id, rng, max_den, component),
             ),
+            Some(SchemaSpec::FractionIdentify) => {
+                Ok(generate_fraction_identify(schema_id, &node_id, rng))
+            }
             Some(SchemaSpec::GeometrySides) => {
                 Ok(generate_geometry_sides(schema_id, &node_id, rng))
             }
@@ -110,6 +113,16 @@ impl DisciplinePlugin for MathPlugin {
     }
 
     fn validate_answer(&self, item: &GeneratedItem) -> ValidationResult {
+        if let Some(answer) = compute_visual_answer(item) {
+            if answer == item.answer.0 {
+                return ValidationResult::ok();
+            }
+            return ValidationResult::fail(format!(
+                "expected {} but got {}",
+                answer, item.answer.0
+            ));
+        }
+
         match compute_answer(&item.question.0) {
             Ok(answer) => {
                 if answer == item.answer.0 {
@@ -149,6 +162,7 @@ enum SchemaSpec {
         max_den: u32,
         component: FractionComponent,
     },
+    FractionIdentify,
     GeometrySides,
     GeometryVertices,
     GeometryFaces,
@@ -194,8 +208,8 @@ fn schema_spec(id: &str) -> Option<SchemaSpec> {
                 tables: &[2, 3, 4, 5, 10],
             });
         }
-        "p2-geometry-2d-vertices-horizontal" | "p2-geometry-2d-vertices-vertical" => {
-            return Some(SchemaSpec::GeometryVertices);
+        "p2-fractions-identify-shaded-horizontal" | "p2-fractions-identify-shaded-vertical" => {
+            return Some(SchemaSpec::FractionIdentify);
         }
         "p2-fractions-unit-fractions-language-horizontal"
         | "p2-fractions-unit-fractions-language-vertical" => {
@@ -219,6 +233,9 @@ fn schema_spec(id: &str) -> Option<SchemaSpec> {
                 max_den: 12,
                 component: FractionComponent::Diagrams,
             });
+        }
+        "p2-geometry-2d-vertices-horizontal" | "p2-geometry-2d-vertices-vertical" => {
+            return Some(SchemaSpec::GeometryVertices);
         }
         _ => {}
     }
@@ -276,7 +293,7 @@ fn generate_count(
     rng: &mut dyn RngCore,
     max: u32,
 ) -> GeneratedItem {
-    let n: u32 = rng.gen_range(1..=max);
+    let n: u32 = rng.random_range(1..=max);
     let question = if schema_id.0.ends_with("vertical") {
         format!("Write the number:\n{}", n)
     } else {
@@ -310,23 +327,23 @@ fn generate_add_sub(
     rng: &mut dyn RngCore,
     max: u32,
 ) -> GeneratedItem {
-    let add = rng.gen_bool(0.5);
+    let add = rng.random_bool(0.5);
     let min = difficulty_floor(max);
     let (a, b, op, answer) = if add {
-        let a = rng.gen_range(min..=max - 1);
+        let a = rng.random_range(min..=max - 1);
         let b_max = max.saturating_sub(a).max(1);
         let b = if b_max < min {
-            rng.gen_range(1..=b_max)
+            rng.random_range(1..=b_max)
         } else {
-            rng.gen_range(min..=b_max)
+            rng.random_range(min..=b_max)
         };
         (a, b, '+', a + b)
     } else {
-        let a = rng.gen_range(min..=max);
+        let a = rng.random_range(min..=max);
         let b = if a < min {
-            rng.gen_range(1..=a)
+            rng.random_range(1..=a)
         } else {
-            rng.gen_range(min..=a)
+            rng.random_range(min..=a)
         };
         (a, b, '-', a - b)
     };
@@ -351,7 +368,7 @@ fn generate_multiply(
     tables: &[u32],
 ) -> GeneratedItem {
     let a = *tables.choose(rng).unwrap_or(&2);
-    let b = rng.gen_range(1..=12);
+    let b = rng.random_range(1..=12);
     let _ = schema_id;
     let question = format!("{}\n× {}\n────", a, b);
 
@@ -372,7 +389,7 @@ fn generate_divide(
     tables: &[u32],
 ) -> GeneratedItem {
     let divisor = *tables.choose(rng).unwrap_or(&2);
-    let quotient = rng.gen_range(1..=12);
+    let quotient = rng.random_range(1..=12);
     let dividend = divisor * quotient;
     let _ = schema_id;
     let question = format!("{}\n÷ {}\n────", dividend, divisor);
@@ -394,8 +411,7 @@ fn generate_fraction_unit(
     max_den: u32,
     component: FractionComponent,
 ) -> GeneratedItem {
-    let denominator = rng.gen_range(2..=max_den.max(2));
-    let _vertical = schema_id.0.ends_with("vertical");
+    let denominator = rng.random_range(2..=max_den.max(2));
     let question = match component {
         FractionComponent::Language => format!(
             "Language: One part out of {} equal parts is what fraction? ___",
@@ -428,13 +444,12 @@ fn generate_fraction_equivalent(
     max_den: u32,
     component: FractionComponent,
 ) -> GeneratedItem {
-    let denominator = rng.gen_range(2..=max_den.max(3));
-    let numerator = rng.gen_range(1..denominator);
-    let factor = rng.gen_range(2..=4);
+    let denominator = rng.random_range(2..=max_den.max(3));
+    let numerator = rng.random_range(1..denominator);
+    let factor = rng.random_range(2..=4);
     let expanded_num = numerator * factor;
     let expanded_den = denominator * factor;
-    let missing_numerator = rng.gen_bool(0.5);
-    let _vertical = schema_id.0.ends_with("vertical");
+    let missing_numerator = rng.random_bool(0.5);
 
     let (question, answer) = match component {
         FractionComponent::Language => {
@@ -496,12 +511,36 @@ fn generate_fraction_equivalent(
     }
 }
 
-fn fraction_bar(shaded: u32, total: u32) -> String {
-    let clamped_total = total.clamp(2, 16);
-    let clamped_shaded = shaded.min(clamped_total);
-    let filled = "■".repeat(clamped_shaded as usize);
-    let empty = "□".repeat((clamped_total - clamped_shaded) as usize);
-    format!("[{}{}]", filled, empty)
+fn generate_fraction_identify(
+    schema_id: &SchemaId,
+    node_id: &str,
+    rng: &mut dyn RngCore,
+) -> GeneratedItem {
+    let style = if rng.random_bool(0.5) { "bar" } else { "stack" };
+    let parts = *[2_u32, 3, 4, 5, 6, 8].choose(rng).unwrap_or(&4);
+    let shaded = rng.random_range(1..parts);
+    let prompt = match rng.random_range(0..6) {
+        0 => "What fraction is shaded?",
+        1 => "Write the shaded fraction.",
+        2 => "Name the shaded part.",
+        3 => "What part of the whole is shaded?",
+        4 => "Fill in the fraction for the shaded part.",
+        _ => "Write the fraction that is shaded.",
+    };
+    let question = if schema_id.0.ends_with("vertical") {
+        format!("{}\n___ / ___", prompt)
+    } else {
+        format!("{} ___/___", prompt)
+    };
+
+    GeneratedItem {
+        node_id: node_id.to_string(),
+        schema_id: schema_id.clone(),
+        question: RenderedQuestion(question),
+        answer: RenderedAnswer(format!("{}/{}", shaded, parts)),
+        working: None,
+        visuals: vec![fraction_visual(style, shaded, parts)],
+    }
 }
 
 fn generate_geometry_sides(
@@ -589,6 +628,23 @@ fn solid_visual(solid: &str) -> serde_json::Value {
         "kind": "solid3d",
         "solid": solid,
     })
+}
+
+fn fraction_visual(style: &str, shaded: u32, parts: u32) -> serde_json::Value {
+    json!({
+        "kind": "fraction_bar",
+        "style": style,
+        "shaded": shaded,
+        "parts": parts,
+    })
+}
+
+fn fraction_bar(shaded: u32, total: u32) -> String {
+    let clamped_total = total.clamp(2, 16);
+    let clamped_shaded = shaded.min(clamped_total);
+    let filled = "■".repeat(clamped_shaded as usize);
+    let empty = "□".repeat((clamped_total - clamped_shaded) as usize);
+    format!("[{}{}]", filled, empty)
 }
 
 fn compute_answer(question: &str) -> Result<String, String> {
@@ -747,6 +803,34 @@ fn compute_fraction_answer(question: &str) -> Option<String> {
     nums.last().map(|denominator| format!("1/{}", denominator))
 }
 
+fn compute_visual_answer(item: &GeneratedItem) -> Option<String> {
+    let visual = item.visuals.first()?;
+    let kind = visual.get("kind")?.as_str()?;
+    match kind {
+        "fraction_bar" => {
+            let shaded = visual.get("shaded")?.as_u64()?;
+            let parts = visual.get("parts")?.as_u64()?;
+            Some(format!("{}/{}", shaded, parts))
+        }
+        "shape2d" => {
+            let shape = visual.get("shape")?.as_str()?;
+            let answer = if item.schema_id.0.contains("sides") {
+                shape_sides(shape)?
+            } else if item.schema_id.0.contains("vertices") {
+                shape_vertices(shape)?
+            } else {
+                return None;
+            };
+            Some(answer.to_string())
+        }
+        "solid3d" => {
+            let solid = visual.get("solid")?.as_str()?;
+            Some(solid_faces(solid)?.to_string())
+        }
+        _ => None,
+    }
+}
+
 fn parse_fraction_bar_counts(input: &str) -> Option<(u32, u32)> {
     let start = input.find('[')?;
     let rest = &input[start + 1..];
@@ -805,11 +889,7 @@ fn parse_fraction_token(token: &str) -> Option<(u32, u32)> {
 }
 
 fn compute_geometry_answer(question: &str) -> Option<u32> {
-    let normalized = question
-        .to_lowercase()
-        .replace('-', " ")
-        .replace('?', " ")
-        .replace(':', " ");
+    let normalized = question.to_lowercase().replace(['-', '?', ':'], " ");
 
     if normalized.contains("side") {
         if normalized.contains("triangle") {
@@ -903,7 +983,7 @@ fn solid_faces(solid: &str) -> Option<u32> {
 
 fn geometry_sides_question(shape: &str, rng: &mut dyn RngCore) -> String {
     let article = article_for(shape);
-    match rng.gen_range(0..8) {
+    match rng.random_range(0..8) {
         0 => format!("How many sides does {article} {shape} have? ___"),
         1 => format!("Count the sides of {article} {shape}: ___"),
         2 => format!(
@@ -923,7 +1003,7 @@ fn geometry_sides_question(shape: &str, rng: &mut dyn RngCore) -> String {
 
 fn geometry_vertices_question(shape: &str, rng: &mut dyn RngCore) -> String {
     let article = article_for(shape);
-    match rng.gen_range(0..8) {
+    match rng.random_range(0..8) {
         0 => format!("How many corners does {article} {shape} have? ___"),
         1 => format!("Count the corners of {article} {shape}: ___"),
         2 => format!(
@@ -943,7 +1023,7 @@ fn geometry_vertices_question(shape: &str, rng: &mut dyn RngCore) -> String {
 
 fn geometry_faces_question(solid: &str, rng: &mut dyn RngCore) -> String {
     let article = article_for(solid);
-    match rng.gen_range(0..8) {
+    match rng.random_range(0..8) {
         0 => format!("How many faces does {article} {solid} have? ___"),
         1 => format!("Count the faces of {article} {solid}: ___"),
         2 => format!(
@@ -988,9 +1068,10 @@ mod tests {
     #[test]
     fn validate_math_plugin_samples() {
         let plugin = MathPlugin::new().expect("plugin init");
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         for schema in [
             "p1-add-sub-within-10-horizontal",
+            "p2-fractions-identify-shaded-horizontal",
             "p2-multiply-2-3-4-5-10-vertical",
             "p2-fractions-unit-fractions-language-horizontal",
             "p2-fractions-unit-fractions-symbols-vertical",

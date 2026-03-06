@@ -1,0 +1,10 @@
+discipline: math-singapore
+target_node: p2-fractions-identify-shaded
+composition:
+  - source: target_node
+    weight: 1.0
+    item_types: []
+item_count: 8
+include_answer_key: true
+include_workings: false
+custom_sections: []
