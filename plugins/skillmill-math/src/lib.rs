@@ -776,12 +776,11 @@ fn compute_fraction_answer(question: &str) -> Option<String> {
         }
     }
 
-    if lower.contains("what fraction is shaded") {
-        if let Some((shaded, total)) = parse_fraction_bar_counts(question) {
-            if total > 0 {
-                return Some(format!("{}/{}", shaded, total));
-            }
-        }
+    if lower.contains("what fraction is shaded")
+        && let Some((shaded, total)) = parse_fraction_bar_counts(question)
+        && total > 0
+    {
+        return Some(format!("{}/{}", shaded, total));
     }
 
     let is_unit_fraction_prompt = lower.contains("unit fraction")
@@ -870,10 +869,10 @@ fn extract_numbers(input: &str) -> Vec<u32> {
             current.clear();
         }
     }
-    if !current.is_empty() {
-        if let Ok(n) = current.parse::<u32>() {
-            nums.push(n);
-        }
+    if !current.is_empty()
+        && let Ok(n) = current.parse::<u32>()
+    {
+        nums.push(n);
     }
     nums
 }

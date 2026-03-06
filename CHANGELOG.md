@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.4] - 2026-03-07
+### Added
+- CommonCore-inspired shaded fraction worksheets for P2, including rendered review outputs in `examples/run-01`.
+- Per-node `template_style` support in the curriculum and render pipeline.
+- Named math template variants for `commoncore-portrait` and `landscape-drill`.
+
+### Changed
+- Math worksheet templates were redesigned to match CommonCore-style portrait layouts, color accents, answer strips, and scoring footer blocks.
+- Geometry worksheets now render diagram-based visuals and reserve more room for student answers.
+- Workspace tests and lint coverage were updated to keep the release path green under the enforced hooks.
+
 ## [0.1.3] - 2026-03-06
 ### Added
 - Fraction curriculum expansion with componentized schemas for:
