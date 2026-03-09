@@ -1,4 +1,4 @@
-#let data = json.decode(sys.inputs.data)
+#let data = json(bytes(sys.inputs.data))
 #let spec = data.spec
 
 #set page(width: 29.7cm, height: 21cm, margin: 0.45cm)
