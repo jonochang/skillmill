@@ -421,10 +421,12 @@ fn generate_fraction_unit(
             "Symbols: Write the unit fraction with denominator {}: ___",
             denominator
         ),
-        FractionComponent::Diagrams => {
-            let bar = fraction_bar(1, denominator);
-            format!("Diagrams: {}  What fraction is shaded? ___", bar)
-        }
+        FractionComponent::Diagrams => "What fraction is shaded? ___".to_string(),
+    };
+    let visuals = if matches!(component, FractionComponent::Diagrams) {
+        vec![fraction_visual("bar", 1, denominator)]
+    } else {
+        vec![]
     };
 
     GeneratedItem {
@@ -433,7 +435,7 @@ fn generate_fraction_unit(
         question: RenderedQuestion(question),
         answer: RenderedAnswer(format!("1/{}", denominator)),
         working: None,
-        visuals: vec![],
+        visuals,
     }
 }
 
@@ -483,22 +485,30 @@ fn generate_fraction_equivalent(
             }
         }
         FractionComponent::Diagrams => {
-            let left_bar = fraction_bar(numerator, denominator);
-            let right_bar = fraction_bar(expanded_num, expanded_den);
             if missing_numerator {
                 let q = format!(
-                    "Diagrams: {} = {}  Complete: {}/{} = ___/{}",
-                    left_bar, right_bar, numerator, denominator, expanded_den
+                    "Complete the equivalent fraction: {}/{} = ___/{}",
+                    numerator, denominator, expanded_den
                 );
                 (q, expanded_num.to_string())
             } else {
                 let q = format!(
-                    "Diagrams: {} = {}  Complete: {}/{} = {}/___",
-                    left_bar, right_bar, numerator, denominator, expanded_num
+                    "Complete the equivalent fraction: {}/{} = {}/___",
+                    numerator, denominator, expanded_num
                 );
                 (q, expanded_den.to_string())
             }
         }
+    };
+    let visuals = if matches!(component, FractionComponent::Diagrams) {
+        vec![fraction_pair_visual(
+            numerator,
+            denominator,
+            expanded_num,
+            expanded_den,
+        )]
+    } else {
+        vec![]
     };
 
     GeneratedItem {
@@ -507,7 +517,7 @@ fn generate_fraction_equivalent(
         question: RenderedQuestion(question),
         answer: RenderedAnswer(answer),
         working: None,
-        visuals: vec![],
+        visuals,
     }
 }
 
@@ -516,7 +526,7 @@ fn generate_fraction_identify(
     node_id: &str,
     rng: &mut dyn RngCore,
 ) -> GeneratedItem {
-    let style = if rng.random_bool(0.5) { "bar" } else { "stack" };
+    let style = "bar";
     let parts = *[2_u32, 3, 4, 5, 6, 8].choose(rng).unwrap_or(&4);
     let shaded = rng.random_range(1..parts);
     let prompt = match rng.random_range(0..6) {
@@ -639,12 +649,19 @@ fn fraction_visual(style: &str, shaded: u32, parts: u32) -> serde_json::Value {
     })
 }
 
-fn fraction_bar(shaded: u32, total: u32) -> String {
-    let clamped_total = total.clamp(2, 16);
-    let clamped_shaded = shaded.min(clamped_total);
-    let filled = "■".repeat(clamped_shaded as usize);
-    let empty = "□".repeat((clamped_total - clamped_shaded) as usize);
-    format!("[{}{}]", filled, empty)
+fn fraction_pair_visual(
+    left_shaded: u32,
+    left_parts: u32,
+    right_shaded: u32,
+    right_parts: u32,
+) -> serde_json::Value {
+    json!({
+        "kind": "fraction_pair",
+        "left_shaded": left_shaded,
+        "left_parts": left_parts,
+        "right_shaded": right_shaded,
+        "right_parts": right_parts,
+    })
 }
 
 fn compute_answer(question: &str) -> Result<String, String> {
@@ -776,13 +793,6 @@ fn compute_fraction_answer(question: &str) -> Option<String> {
         }
     }
 
-    if lower.contains("what fraction is shaded")
-        && let Some((shaded, total)) = parse_fraction_bar_counts(question)
-        && total > 0
-    {
-        return Some(format!("{}/{}", shaded, total));
-    }
-
     let is_unit_fraction_prompt = lower.contains("unit fraction")
         || lower.contains("fraction symbol")
         || lower.contains("one part out of")
@@ -827,21 +837,6 @@ fn compute_visual_answer(item: &GeneratedItem) -> Option<String> {
             Some(solid_faces(solid)?.to_string())
         }
         _ => None,
-    }
-}
-
-fn parse_fraction_bar_counts(input: &str) -> Option<(u32, u32)> {
-    let start = input.find('[')?;
-    let rest = &input[start + 1..];
-    let end_rel = rest.find(']')?;
-    let bar = &rest[..end_rel];
-    let shaded = bar.chars().filter(|c| *c == '■').count() as u32;
-    let empty = bar.chars().filter(|c| *c == '□').count() as u32;
-    let total = shaded + empty;
-    if total == 0 {
-        None
-    } else {
-        Some((shaded, total))
     }
 }
 

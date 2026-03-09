@@ -15,7 +15,7 @@
 #let ccs_fill = rgb("#eef7ff")
 
 #let total_sections = spec.sections.len()
-#let uses_visual_layout = spec.policy.target_node == "p1-geometry-2d-sides" or spec.policy.target_node == "p2-fractions-identify-shaded" or spec.policy.target_node == "p2-geometry-2d-vertices" or spec.policy.target_node == "p3-geometry-3d-faces"
+#let uses_visual_layout = spec.policy.target_node == "p1-geometry-2d-sides" or spec.policy.target_node == "p2-fractions-identify-shaded" or spec.policy.target_node == "p2-fractions-unit-fractions" or spec.policy.target_node == "p2-geometry-2d-vertices" or spec.policy.target_node == "p3-geometry-3d-faces" or spec.policy.target_node == "p3-fractions-equivalent-fractions"
 #let rows_per_page = if uses_visual_layout { 8 } else { 15 }
 #let page_count = calc.ceil(total_sections / rows_per_page)
 #let body_height = 22.2cm
@@ -46,6 +46,8 @@
     "Divide Facts"
   } else if node == "p2-fractions-identify-shaded" {
     "Fractions: Shaded Parts"
+  } else if node == "p2-fractions-unit-fractions" {
+    "Fractions: Unit Fractions"
   } else if node == "p2-geometry-2d-vertices" {
     "2D Shapes: Number of Vertices"
   } else if node == "p3-add-sub-within-10000" {
@@ -56,6 +58,8 @@
     "Divide Facts"
   } else if node == "p3-geometry-3d-faces" {
     "3D Solids: Number of Faces"
+  } else if node == "p3-fractions-equivalent-fractions" {
+    "Fractions: Equivalent Fractions"
   } else {
     "Math Worksheet"
   }
@@ -114,34 +118,23 @@
   ]
 ]
 
-#let render_solid_3d(solid) = box(width: visual_width, height: row_height - 0.25cm)[
+#let solid_asset(solid) = {
+  if solid == "cube" {
+    "../../../../assets/geometry/cuboid.svg"
+  } else if solid == "cuboid" {
+    "../../../../assets/geometry/cuboid.svg"
+  } else if solid == "triangular-prism" {
+    "../../../../assets/geometry/triangular-prism.svg"
+  } else if solid == "square-pyramid" {
+    "../../../../assets/geometry/square-pyramid.svg"
+  } else {
+    "../../../../assets/geometry/tetrahedron.svg"
+  }
+}
+
+#let render_solid_3d(solid) = box(width: visual_width, height: row_height - 0.25cm, clip: true)[
   #align(center + horizon)[
-    #if solid == "cube" or solid == "cuboid" {
-      polygon(stroke: (paint: ccs_ink, thickness: 0.8pt), fill: ccs_fill, (0.35cm, 0.55cm), (1.55cm, 0.55cm), (1.55cm, 1.75cm), (0.35cm, 1.75cm))
-      polygon(stroke: (paint: ccs_ink, thickness: 0.8pt), fill: rgb("#ffffff"), (0.95cm, 0.15cm), (2.15cm, 0.15cm), (2.15cm, 1.35cm), (0.95cm, 1.35cm))
-      line(start: (0.35cm, 0.55cm), end: (0.95cm, 0.15cm), stroke: (paint: ccs_ink, thickness: 0.8pt))
-      line(start: (1.55cm, 0.55cm), end: (2.15cm, 0.15cm), stroke: (paint: ccs_ink, thickness: 0.8pt))
-      line(start: (1.55cm, 1.75cm), end: (2.15cm, 1.35cm), stroke: (paint: ccs_ink, thickness: 0.8pt))
-      line(start: (0.35cm, 1.75cm), end: (0.95cm, 1.35cm), stroke: (paint: ccs_ink, thickness: 0.8pt))
-    } else if solid == "triangular-prism" {
-      polygon(stroke: (paint: ccs_ink, thickness: 0.8pt), fill: ccs_fill, (0.35cm, 1.7cm), (1.1cm, 0.25cm), (1.85cm, 1.7cm))
-      polygon(stroke: (paint: ccs_ink, thickness: 0.8pt), fill: rgb("#ffffff"), (0.85cm, 1.35cm), (1.6cm, -0.1cm), (2.35cm, 1.35cm))
-      line(start: (0.35cm, 1.7cm), end: (0.85cm, 1.35cm), stroke: (paint: ccs_ink, thickness: 0.8pt))
-      line(start: (1.1cm, 0.25cm), end: (1.6cm, -0.1cm), stroke: (paint: ccs_ink, thickness: 0.8pt))
-      line(start: (1.85cm, 1.7cm), end: (2.35cm, 1.35cm), stroke: (paint: ccs_ink, thickness: 0.8pt))
-    } else if solid == "square-pyramid" {
-      polygon(stroke: (paint: ccs_ink, thickness: 0.8pt), fill: ccs_fill, (0.4cm, 1.45cm), (1.45cm, 1.05cm), (2.2cm, 1.6cm), (1.15cm, 1.95cm))
-      line(start: (1.25cm, 0.15cm), end: (0.4cm, 1.45cm), stroke: (paint: ccs_ink, thickness: 0.8pt))
-      line(start: (1.25cm, 0.15cm), end: (1.45cm, 1.05cm), stroke: (paint: ccs_ink, thickness: 0.8pt))
-      line(start: (1.25cm, 0.15cm), end: (2.2cm, 1.6cm), stroke: (paint: ccs_ink, thickness: 0.8pt))
-      line(start: (1.25cm, 0.15cm), end: (1.15cm, 1.95cm), stroke: (paint: ccs_ink, thickness: 0.8pt))
-    } else {
-      polygon(stroke: (paint: ccs_ink, thickness: 0.8pt), fill: ccs_fill, (1.25cm, 0.15cm), (2.2cm, 1.75cm), (0.3cm, 1.75cm))
-      polygon(stroke: (paint: ccs_ink, thickness: 0.8pt), fill: rgb("#ffffff"), (1.25cm, 0.65cm), (1.8cm, 1.55cm), (0.7cm, 1.55cm))
-      line(start: (1.25cm, 0.15cm), end: (1.25cm, 0.65cm), stroke: (paint: ccs_ink, thickness: 0.8pt))
-      line(start: (2.2cm, 1.75cm), end: (1.8cm, 1.55cm), stroke: (paint: ccs_ink, thickness: 0.8pt))
-      line(start: (0.3cm, 1.75cm), end: (0.7cm, 1.55cm), stroke: (paint: ccs_ink, thickness: 0.8pt))
-    }
+    #image(solid_asset(solid), width: visual_width - 0.15cm)
   ]
 ]
 
@@ -172,11 +165,25 @@
   ]
 ]
 
+#let render_fraction_pair(visual) = box(width: visual_width + 0.45cm, height: row_height - 0.25cm)[
+  #align(center + horizon)[
+    grid(columns: (1fr, auto, 1fr), column-gutter: 0.12cm, align: (center, center))[
+      fraction_row(visual.left_parts, visual.left_shaded, ccs_blue.lighten(45%), 0.62cm)
+    ][
+      #text(weight: "semibold")[=]
+    ][
+      fraction_row(visual.right_parts, visual.right_shaded, ccs_red.lighten(55%), 0.62cm)
+    ]
+  ]
+]
+
 #let render_visual(visual) = {
   if visual.kind == "shape2d" {
     render_shape_2d(visual.shape)
   } else if visual.kind == "fraction_bar" {
     render_fraction_bar(visual.style, visual.shaded, visual.parts)
+  } else if visual.kind == "fraction_pair" {
+    render_fraction_pair(visual)
   } else if visual.kind == "solid3d" {
     render_solid_3d(visual.solid)
   } else {
